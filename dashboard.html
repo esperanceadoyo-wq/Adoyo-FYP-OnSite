@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html class="dark" lang="en" style="">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Azure Horizon | OnSite Community Hub</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#f8fafc",
+                      "inverse-primary": "#2ab8cb",
+                      "on-surface-variant": "#94a3b8",
+                      "surface-container-low": "#1e293b",
+                      "surface": "#0f172a",
+                      "on-tertiary-fixed-variant": "#fdba74",
+                      "primary-fixed": "#083344",
+                      "on-tertiary-container": "#ffedd5",
+                      "tertiary-fixed-dim": "#431407",
+                      "secondary-container": "#1e293b",
+                      "on-error-container": "#fca5a5",
+                      "surface-container-lowest": "#020617",
+                      "surface-container-highest": "#1e293b",
+                      "on-background": "#f8fafc",
+                      "on-secondary-fixed-variant": "#cbd5e1",
+                      "secondary-fixed": "#334155",
+                      "on-primary-fixed": "#cffafe",
+                      "surface-container": "#0f172a",
+                      "error-container": "#7f1d1d",
+                      "tertiary": "#f97316",
+                      "surface-tint": "#2ab8cb",
+                      "on-primary-fixed-variant": "#a5f3fc",
+                      "error": "#ef4444",
+                      "primary-container": "#164e63",
+                      "primary-fixed-dim": "#0e7490",
+                      "outline": "#334155",
+                      "on-primary-container": "#e0f7fa",
+                      "on-tertiary": "#0f172a",
+                      "outline-variant": "#1e293b",
+                      "tertiary-container": "#7c2d12",
+                      "surface-container-high": "#1e293b",
+                      "inverse-surface": "#f1f5f9",
+                      "surface-bright": "#1e293b",
+                      "on-surface": "#f8fafc",
+                      "tertiary-fixed": "#ffedd5",
+                      "surface-dim": "#0f172a",
+                      "primary": "#2ab8cb",
+                      "on-tertiary-fixed": "#ffedd5",
+                      "on-secondary": "#f8fafc",
+                      "inverse-on-surface": "#0f172a",
+                      "background": "#0f172a",
+                      "surface-variant": "#1e293b",
+                      "on-secondary-container": "#e2e8f0",
+                      "secondary": "#94a3b8",
+                      "secondary-fixed-dim": "#1e293b",
+                      "on-primary": "#083344",
+                      "on-error": "#083344"
+              },
+              "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+              "fontFamily": { "headline": ["Inter"], "display": ["Inter"], "body": ["Inter"], "label": ["Inter"] }
+            },
+          },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+    <aside class="h-screen w-64 fixed left-0 top-0 hidden md:flex flex-col bg-surface-container-lowest border-r border-outline-variant z-50">
+        <div class="p-6">
+            <h1 class="text-2xl font-extrabold text-on-surface flex items-center gap-2">ONSITE</h1>
+        </div>
+        <nav class="px-3 space-y-1">
+            <a class="bg-primary-container text-on-primary-container rounded-lg px-4 py-3 flex items-center gap-3" href="#">Home</a>
+        </nav>
+    </aside>
+    <main class="md:ml-64 p-8">
+        <h2 class="text-4xl font-extrabold mb-6">Hi Christine, <span class="text-primary">find your focus today.</span></h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-surface-container-low p-6 rounded-3xl border border-outline-variant">
+                <h4 class="font-bold">Open Co-working Lounge</h4>
+                <p class="text-sm text-on-surface-variant">A breathtaking vertical space.</p>
+            </div>
+            <div class="bg-surface-container-low p-6 rounded-3xl border border-outline-variant">
+                <h4 class="font-bold">Cyberjaya Library</h4>
+                <p class="text-sm text-on-surface-variant">High-speed connectivity.</p>
+            </div>
+            <div class="bg-surface-container-low p-6 rounded-3xl border border-outline-variant">
+                <h4 class="font-bold">The Greenhouse</h4>
+                <p class="text-sm text-on-surface-variant">Study surrounded by nature.</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
