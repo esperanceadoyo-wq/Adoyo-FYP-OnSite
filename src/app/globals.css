@@ -150,28 +150,28 @@ body {
     .dark .icon-moon { opacity: 1; }
 
 :root {
-        --color-background: 255 255 255;
-        --color-on-surface: 30 41 59;
-        --color-on-surface-variant: 71 85 105;
-        --color-outline: 203 213 225;
+        --privacy-background: 255 255 255;
+        --privacy-on-surface: 30 41 59;
+        --privacy-on-surface-variant: 71 85 105;
+        --privacy-outline: 203 213 225;
         --prose-h2: #1e293b;
         --prose-p: #475569;
         --scrollbar-track: #ffffff;
         --scrollbar-thumb: #cbd5e1;
     }
     .dark {
-        --color-background: 15 23 42;
-        --color-on-surface: 248 250 252;
-        --color-on-surface-variant: 148 163 184;
-        --color-outline: 71 85 105;
+        --privacy-background: 15 23 42;
+        --privacy-on-surface: 248 250 252;
+        --privacy-on-surface-variant: 148 163 184;
+        --privacy-outline: 71 85 105;
         --prose-h2: #2ab8cb;
         --prose-p: #94a3b8;
         --scrollbar-track: #0f172a;
         --scrollbar-thumb: #334155;
     }
     body {
-        background-color: rgb(var(--color-background));
-        color: rgb(var(--color-on-surface));
+        background-color: rgb(var(--privacy-background));
+        color: rgb(var(--privacy-on-surface));
         font-family: 'Inter', sans-serif;
         scroll-behavior: smooth;
         transition: background-color 0.3s ease, color 0.3s ease;
