@@ -28,7 +28,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      className="scroll-smooth transition-colors duration-300 bg-white dark:bg-slate-900"
+      lang="en"
+      suppressHydrationWarning
+    >
       <body suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {children}
