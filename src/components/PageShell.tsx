@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { FormEvent, MouseEvent, ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 type PageShellProps = {
   bodyClassName: string;
@@ -33,7 +33,7 @@ export function PageShell({ bodyClassName, children }: PageShellProps) {
     return () => observer.disconnect();
   }, []);
 
-  function handleClick(event: MouseEvent<HTMLDivElement>) {
+  async function handleClick(event: MouseEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement | null;
     if (!target) return;
 
@@ -56,17 +56,7 @@ export function PageShell({ bodyClassName, children }: PageShellProps) {
     }
 
     if (action?.dataset.action === "save-preferences") {
-      localStorage.setItem(
-        "onsite_user_preferences",
-        JSON.stringify({
-          interests: selectedValues('[data-category="interests"].active'),
-          mood: selectedValue('[data-group="mood"] .chip.active'),
-          comfort: selectedValue('[data-group="comfort"] .chip.active'),
-          amenities: selectedValues('[data-category="amenities"].active'),
-          noise: selectedValue('[data-group="noise"] .chip.active'),
-        }),
-      );
-      window.location.href = "/dashboard";
+      await savePreferences(action);
       return;
     }
 
@@ -102,16 +92,8 @@ export function PageShell({ bodyClassName, children }: PageShellProps) {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLDivElement>) {
-    const form = event.target as HTMLElement | null;
-    if (form?.closest('[data-action="login"]')) {
-      event.preventDefault();
-      window.location.href = "/dashboard";
-    }
-  }
-
   return (
-    <div className={bodyClassName} onClick={handleClick} onSubmit={handleSubmit}>
+    <div className={bodyClassName} onClick={handleClick}>
       {children}
     </div>
   );
@@ -127,4 +109,73 @@ function selectedValues(selector: string) {
   ).filter(
     (value): value is string => Boolean(value),
   );
+}
+
+async function savePreferences(action: HTMLElement) {
+  const comfort = selectedValue('[data-group="comfort"] .chip.active');
+  const payload = {
+    comfort_level: comfort,
+    current_mood: selectedValue('[data-group="mood"] .chip.active'),
+    interests: selectedValues('[data-category="interests"].active'),
+    learning_goals: selectedValues('[data-category="interests"].active'),
+    noise_tolerance: selectedValue('[data-group="noise"] .chip.active'),
+    preferred_amenities: selectedValues('[data-category="amenities"].active'),
+    preferred_social_intensity: socialIntensityForComfort(comfort),
+    preferred_space_types: comfort ? [comfort] : [],
+  };
+  const status = document.querySelector<HTMLElement>("[data-onboarding-status]");
+
+  if (
+    payload.interests.length === 0 ||
+    !payload.current_mood ||
+    !payload.comfort_level ||
+    payload.preferred_amenities.length === 0 ||
+    !payload.noise_tolerance
+  ) {
+    setStatus(status, "Please choose at least one option in every section.", true);
+    return;
+  }
+
+  action.setAttribute("disabled", "true");
+  action.setAttribute("aria-busy", "true");
+  setStatus(status, "Saving your preferences...", false);
+
+  try {
+    const response = await fetch("/api/profile", {
+      body: JSON.stringify(payload),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+    const data = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setStatus(status, data.error || "Could not save your preferences.", true);
+      return;
+    }
+
+    localStorage.setItem("onsite_user_preferences", JSON.stringify(payload));
+    window.location.href = "/dashboard";
+  } catch {
+    setStatus(status, "Could not reach the backend. Please try again.", true);
+  } finally {
+    action.removeAttribute("disabled");
+    action.removeAttribute("aria-busy");
+  }
+}
+
+function socialIntensityForComfort(comfort: string | null) {
+  if (comfort === "private") return 1;
+  if (comfort === "public") return 3;
+  return 2;
+}
+
+function setStatus(
+  statusElement: HTMLElement | null,
+  message: string,
+  isError: boolean,
+) {
+  if (!statusElement) return;
+
+  statusElement.textContent = message;
+  statusElement.dataset.state = isError ? "error" : "saving";
 }

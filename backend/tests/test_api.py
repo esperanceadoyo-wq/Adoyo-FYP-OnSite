@@ -22,6 +22,20 @@ def test_register_creates_authenticated_user_and_profile(client):
     assert profile_response.get_json()["profile"]["interests"] == []
 
 
+def test_register_rejects_weak_password(client):
+    response = client.post(
+        "/api/auth/register",
+        json={
+            "name": "Amina Student",
+            "email": "amina@example.edu",
+            "password": "password",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "Password" in response.get_json()["error"]
+
+
 def test_profile_recommendation_and_progress_flow(authenticated_client):
     profile_response = authenticated_client.put(
         "/api/profile",

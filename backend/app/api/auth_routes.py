@@ -1,3 +1,5 @@
+import re
+
 from flask import Blueprint, g, jsonify, request, session
 
 from ..auth import login_required
@@ -5,6 +7,16 @@ from ..extensions import db
 from ..models import User, UserProfile
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+
+def password_is_valid(password: str) -> bool:
+    return (
+        len(password) >= 8
+        and any(character.isupper() for character in password)
+        and any(character.islower() for character in password)
+        and any(character.isdigit() for character in password)
+    )
 
 
 @auth_bp.post("/register")
@@ -14,10 +26,12 @@ def register():
     email = str(payload.get("email", "")).strip().lower()
     password = str(payload.get("password", ""))
 
-    if not name or not email or "@" not in email:
+    if len(name) < 2 or not EMAIL_PATTERN.match(email):
         return jsonify({"error": "A valid name and email are required."}), 400
-    if len(password) < 8:
-        return jsonify({"error": "Password must contain at least 8 characters."}), 400
+    if not password_is_valid(password):
+        return jsonify({
+            "error": "Password must be at least 8 characters and include uppercase, lowercase, and a number."
+        }), 400
     if db.session.scalar(db.select(User).where(User.email == email)):
         return jsonify({"error": "An account with that email already exists."}), 409
 

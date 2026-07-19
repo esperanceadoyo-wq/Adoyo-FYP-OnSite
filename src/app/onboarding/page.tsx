@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/PageShell";
+import { requireAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
   title: "OnSite | Onboarding",
 };
 
-export default function Page() {
+export default async function Page() {
+  await requireAuth("/onboarding");
+
   return (
     <PageShell bodyClassName={"min-h-screen flex flex-col font-body text-on-background antialiased bg-background"}>
       <>
@@ -223,6 +226,7 @@ export default function Page() {
             <button type={"button"} data-action={"save-preferences"} className={"w-full bg-primary text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all active:scale-95"}>Discover Your Space Now 
               <span className={"material-symbols-outlined text-sm"}>arrow_forward</span>
             </button>
+            <p aria-live={"polite"} className={"mt-3 min-h-5 text-center text-sm font-medium text-on-surface-variant data-[state=error]:text-error data-[state=saving]:text-primary"} data-onboarding-status></p>
 
           </div>
 

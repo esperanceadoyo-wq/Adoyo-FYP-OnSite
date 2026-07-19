@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/PageShell";
+import { SignupForm } from "@/components/SignupForm";
 
 export const metadata: Metadata = {
   title: "Sign Up | OnSite",
@@ -35,49 +36,17 @@ export default function Page() {
 
           </div>
 
-          <form action={"/api/signup"} className={"space-y-4"} method={"POST"}>
+          <SignupForm />
 
-            <div>
+          <div className={"text-center pt-4 mt-4 border-t border-slate-100 dark:border-slate-800"}>
 
-              <label className={"text-slate-700 dark:text-slate-300 text-sm font-semibold block mb-1"}>Full Name</label>
-
-              <input className={"form-input w-full rounded-xl text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 h-12 p-3 text-base font-normal"} name={"full_name"} placeholder={"John Doe"} type={"text"} required />
-
-            </div>
-
-            <div>
-
-              <label className={"text-slate-700 dark:text-slate-300 text-sm font-semibold block mb-1"}>Email Address</label>
-
-              <input className={"form-input w-full rounded-xl text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 h-12 p-3 text-base font-normal"} name={"email"} placeholder={"name@university.edu"} type={"email"} required />
-
-            </div>
-
-            <div>
-
-              <label className={"text-slate-700 dark:text-slate-300 text-sm font-semibold block mb-1"}>Password</label>
-
-              <input className={"form-input w-full rounded-xl text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 h-12 p-3 text-base font-normal"} name={"password"} placeholder={"Create a password"} type={"password"} required />
-
-            </div>
-
-            <div className={"pt-2"}>
-
-              <button className={"w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/25 active:scale-[0.98]"} type={"submit"}>Sign Up</button>
-
-            </div>
-
-            <div className={"text-center pt-4 border-t border-slate-100 dark:border-slate-800"}>
-
-              <p className={"text-slate-600 dark:text-slate-400 text-sm"}>
+            <p className={"text-slate-600 dark:text-slate-400 text-sm"}>
 Already have an account? 
-                <a className={"text-primary font-bold hover:underline ml-1"} href={"/login"}>Log In</a>
+              <a className={"text-primary font-bold hover:underline ml-1"} href={"/login"}>Log In</a>
 
-              </p>
+            </p>
 
-            </div>
-
-          </form>
+          </div>
 
         </div>
 

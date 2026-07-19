@@ -43,7 +43,7 @@ export default function Page() {
 
               </button>
 
-              <a href={"/dashboard"} className={"text-sm font-bold text-slate-900 dark:text-slate-200 px-4 py-2 hover:text-primary transition-colors inline-block align-middle mt-2"}>Log In</a>
+              <a href={"/login"} className={"text-sm font-bold text-slate-900 dark:text-slate-200 px-4 py-2 hover:text-primary transition-colors inline-block align-middle mt-2"}>Log In</a>
 
               <a href={"/signup"} className={"bg-primary text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95 inline-block text-center"}>Sign Up</a>
 
@@ -303,7 +303,7 @@ export default function Page() {
 
                 <a href={"/signup"} className={"bg-white text-primary px-10 py-4 rounded-xl font-bold hover:shadow-xl transition-all active:scale-95 text-center"}>Sign Up Now</a>
 
-                <a href={"/dashboard"} className={"bg-primary-fixed/20 dark:bg-white/10 border border-white/20 text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 dark:hover:bg-white/20 transition-all text-center"}>Log In</a>
+                <a href={"/login"} className={"bg-primary-fixed/20 dark:bg-white/10 border border-white/20 text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 dark:hover:bg-white/20 transition-all text-center"}>Log In</a>
 
               </div>
 

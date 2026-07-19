@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { LoginForm } from "@/components/LoginForm";
 import { PageShell } from "@/components/PageShell";
 
 export const metadata: Metadata = {
@@ -46,51 +48,11 @@ export default function Page() {
           </div>
         </div>
 
-        <form data-action={"login"} action={"#"} className={"px-8 py-6 space-y-5"} method={"POST"}>
+        <Suspense fallback={<div className="px-8 py-6 text-sm text-slate-400">Loading...</div>}>
+          <LoginForm />
+        </Suspense>
 
-          <div className={"flex flex-col w-full"}>
-
-            <label className={"text-slate-700 dark:text-slate-300 text-sm font-semibold leading-normal pb-2 ml-1"}>Email Address</label>
-
-            <input className={"form-input flex w-full rounded-xl text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 focus:border-primary focus:ring-2 focus:ring-primary/20 h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal"} placeholder={"name@company.com"} type={"email"} />
-
-          </div>
-
-          <div className={"flex flex-col w-full"}>
-
-            <label className={"text-slate-700 dark:text-slate-300 text-sm font-semibold leading-normal pb-2 ml-1"}>Password</label>
-
-            <div className={"relative flex w-full items-center"}>
-
-              <input className={"form-input flex w-full rounded-xl text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 focus:border-primary focus:ring-2 focus:ring-primary/20 h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] pr-12 text-base font-normal"} placeholder={"Enter your password"} type={"password"} />
-
-              <button className={"absolute right-4 text-slate-400 dark:text-slate-500 hover:text-primary transition-colors"} type={"button"}>
-
-                <span className={"material-symbols-outlined"}>visibility</span>
-
-              </button>
-
-            </div>
-
-            <div className={"flex items-center mt-2"}>
-              <input id={"remember-me"} type={"checkbox"} className={"w-4 h-4 text-primary bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded focus:ring-primary/20"} />
-              <label htmlFor={"remember-me"} className={"ml-2 text-sm text-slate-400 font-medium"}>Remember me</label>
-            </div>
-            <div className={"flex justify-end mt-2"}>
-
-            </div>
-
-          </div>
-
-          <div className={"pt-4"}>
-
-            <button className={"w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/25 dark:shadow-primary/20 active:scale-[0.98]"} type={"submit"}>
-                    Log In
-                
-            </button>
-
-          </div>
-
+        <div className={"px-8"}>
           <div className={"flex items-center gap-4 py-2"}>
 
             <div className={"h-px bg-slate-200 dark:bg-slate-800 flex-1"}></div>
@@ -111,8 +73,7 @@ export default function Page() {
             </p>
 
           </div>
-
-        </form>
+        </div>
 
       </div>
       </>

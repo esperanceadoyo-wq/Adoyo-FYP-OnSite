@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import {
+  DashboardAuthPanel,
+  DashboardGreeting,
+  LogoutButton,
+} from "@/components/DashboardAuth";
+import {
+  getDashboardData,
+  type UserProfile,
+  type UserProgress,
+} from "@/lib/dashboard-data";
+import { requireAuth } from "@/lib/server-auth";
+import { getInitials, type AuthUser } from "@/lib/auth";
+import { spacePath } from "@/lib/space-flow";
 
 export const metadata: Metadata = {
   title: "Azure Horizon | OnSite Community Hub",
@@ -33,13 +46,13 @@ type IconName =
   | "users";
 
 const navItems = [
-  { label: "Home", icon: "home", active: true },
-  { label: "Saved", icon: "bookmark" },
-  { label: "Profile", icon: "person" },
-  { label: "Explore", icon: "compass" },
-  { label: "Leaderboard", icon: "leaderboard" },
-  { label: "Admin", icon: "admin" },
-] satisfies Array<{ label: string; icon: IconName; active?: boolean }>;
+  { label: "Home", icon: "home", href: "/dashboard", active: true },
+  { label: "Saved", icon: "bookmark", href: "#" },
+  { label: "Profile", icon: "person", href: "/profile" },
+  { label: "Explore", icon: "compass", href: "#" },
+  { label: "Leaderboard", icon: "leaderboard", href: "#" },
+  { label: "Admin", icon: "admin", href: "#" },
+] satisfies Array<{ label: string; icon: IconName; href: string; active?: boolean }>;
 
 const utilityNavItems = [
   { label: "Notifications", icon: "notification" },
@@ -47,47 +60,14 @@ const utilityNavItems = [
   { label: "Log Out", icon: "logout", danger: true },
 ] satisfies Array<{ label: string; icon: IconName; danger?: boolean }>;
 
-const statChips = [
-  {
-    icon: "gauge",
-    label: "Weekly Goal",
-    value: "0/5 visits",
-    className: "bg-surface-container-lowest border border-outline-variant",
-    iconClassName: "text-primary",
-    valueClassName: "text-on-surface",
-  },
-  {
-    icon: "star",
-    label: "Level 1",
-    value: "New Explorer",
-    className: "bg-primary-container border border-primary/20",
-    iconClassName: "text-primary",
-    valueClassName: "text-on-primary-container",
-  },
-  {
-    icon: "fire",
-    label: "Day 1 Streak",
-    value: "Start your journey!",
-    className: "bg-tertiary-container/30 border border-tertiary/20",
-    iconClassName: "text-tertiary",
-    valueClassName: "text-tertiary",
-  },
-  {
-    icon: "medal",
-    label: "1 Badge",
-    value: "Earned",
-    className: "bg-secondary-container/50",
-    iconClassName: "text-secondary",
-    valueClassName: "text-on-surface",
-  },
-] satisfies Array<{
+type StatChip = {
   icon: IconName;
   label: string;
   value: string;
   className: string;
   iconClassName: string;
   valueClassName: string;
-}>;
+};
 
 const topRecommendations = [
   {
@@ -240,14 +220,17 @@ type DiscoveryCard = {
   name: string;
 };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await requireAuth("/dashboard");
+  const { profile, progress } = await getDashboardData();
+
   return (
     <main className="min-h-screen bg-background pb-24 text-on-background md:pb-8">
       <DesktopSidebar />
       <section className="md:ml-64">
-        <DashboardHeader />
+        <DashboardHeader progress={progress} user={user} />
         <div className="mx-auto mt-4 max-w-7xl space-y-8 px-6">
-          <IntroSection />
+          <IntroSection profile={profile} progress={progress} user={user} />
           <RecommendationSection />
           <CompactRecommendationSection />
           <DiscoverySection />
@@ -277,7 +260,7 @@ function DesktopSidebar() {
                 ? "bg-primary-container text-on-primary-container"
                 : "text-on-surface-variant hover:bg-surface-container-low"
             }`}
-            href="#"
+            href={item.href}
             key={item.label}
           >
             <Icon
@@ -293,25 +276,39 @@ function DesktopSidebar() {
           <hr className="border-outline-variant" />
         </div>
         {utilityNavItems.map((item) => (
-          <a
-            className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200 active:scale-95 ${
-              item.danger
-                ? "text-error hover:bg-error-container/20"
-                : "text-on-surface-variant hover:bg-surface-container-low"
-            }`}
-            href="#"
-            key={item.label}
-          >
-            <Icon className="h-5 w-5" name={item.icon} />
-            <span className="font-medium">{item.label}</span>
-          </a>
+          item.danger ? (
+            <LogoutButton
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-error transition-all duration-200 hover:bg-error-container/20 active:scale-95 disabled:opacity-60"
+              key={item.label}
+            >
+              <Icon className="h-5 w-5" name={item.icon} />
+              <span className="font-medium">{item.label}</span>
+            </LogoutButton>
+          ) : (
+            <a
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-on-surface-variant transition-all duration-200 hover:bg-surface-container-low active:scale-95"
+              href="#"
+              key={item.label}
+            >
+              <Icon className="h-5 w-5" name={item.icon} />
+              <span className="font-medium">{item.label}</span>
+            </a>
+          )
         ))}
       </nav>
     </aside>
   );
 }
 
-function DashboardHeader() {
+function DashboardHeader({
+  progress,
+  user,
+}: {
+  progress: UserProgress | null;
+  user: AuthUser;
+}) {
+  const statChips = dashboardStatChips(progress);
+
   return (
     <header className="sticky top-0 z-40 mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 border-b border-outline-variant bg-background/90 px-6 py-4 backdrop-blur-md md:border-none">
       <div className="flex flex-wrap items-center gap-4">
@@ -333,11 +330,14 @@ function DashboardHeader() {
         ))}
       </div>
       <div className="ml-auto flex items-center gap-3">
-        <button className="flex items-center gap-2 rounded-xl bg-primary-container px-4 py-2 text-xs font-bold text-on-primary-container shadow-sm transition-all hover:bg-primary-container/80 active:scale-95">
+        <a
+          className="flex items-center gap-2 rounded-xl bg-primary-container px-4 py-2 text-xs font-bold text-on-primary-container shadow-sm transition-all hover:bg-primary-container/80 active:scale-95"
+          href="/onboarding"
+        >
           <Icon className="h-4 w-4" name="tune" />
           <span className="hidden sm:inline">Adjust Preferences</span>
           <span className="sm:hidden">Adjust</span>
-        </button>
+        </a>
         <div className="flex items-center gap-2">
           <button
             aria-label="Notifications"
@@ -347,7 +347,7 @@ function DashboardHeader() {
           </button>
           <button className="h-10 w-10 overflow-hidden rounded-full border-2 border-primary transition-transform active:scale-95">
             <span className="flex h-full w-full items-center justify-center bg-surface-variant text-on-surface-variant">
-              <Icon className="h-5 w-5" name="person" />
+              <span className="text-xs font-extrabold">{getInitials(user.name)}</span>
             </span>
           </button>
         </div>
@@ -356,37 +356,144 @@ function DashboardHeader() {
   );
 }
 
-function IntroSection() {
+function IntroSection({
+  profile,
+  progress,
+  user,
+}: {
+  profile: UserProfile | null;
+  progress: UserProgress | null;
+  user: AuthUser;
+}) {
   return (
     <section className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
       <div className="lg:col-span-8">
         <h2 className="mb-2 text-4xl font-extrabold tracking-tight text-on-surface md:text-5xl">
-          Hi Christine, <span className="text-primary">find your focus today.</span>
+          <DashboardGreeting user={user} />
         </h2>
         <p className="max-w-2xl text-lg text-on-surface-variant">
-          Welcome to OnSite. Explore and discover a variety of comfortable
-          spaces designed to help you focus, study, and connect.
+          {profileSummary(profile)}
         </p>
+        <PreferenceRow profile={profile} />
       </div>
-      <div className="flex items-center gap-5 rounded-[2rem] border border-outline-variant bg-surface-container-low p-6 shadow-sm lg:col-span-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-container text-2xl font-extrabold text-on-primary-container">
-          CA
-        </div>
-        <div className="flex-1">
-          <div className="mb-1 flex items-end justify-between">
-            <span className="font-bold text-on-surface">Christine Adoyo</span>
-            <span className="text-[11px] font-bold text-primary">0/200 XP</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-outline-variant">
-            <div className="h-full w-0 rounded-full bg-primary" />
-          </div>
-          <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-primary">
-            Level 1: New Explorer
-          </p>
-        </div>
-      </div>
+      <DashboardAuthPanel progress={progress} user={user} />
     </section>
   );
+}
+
+function PreferenceRow({ profile }: { profile: UserProfile | null }) {
+  const preferences = [
+    profile?.current_mood ? `Mood: ${formatLabel(profile.current_mood)}` : null,
+    profile?.comfort_level
+      ? `Comfort: ${formatLabel(profile.comfort_level)}`
+      : null,
+    profile?.noise_tolerance
+      ? `Noise: ${formatLabel(profile.noise_tolerance)}`
+      : null,
+    profile?.preferred_amenities.length
+      ? `Amenities: ${profile.preferred_amenities.map(formatLabel).join(", ")}`
+      : null,
+  ].filter(Boolean);
+
+  if (preferences.length === 0) {
+    return (
+      <a
+        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container transition-colors hover:bg-primary-container/80"
+        href="/onboarding"
+      >
+        <Icon className="h-4 w-4" name="tune" />
+        Complete your preferences
+      </a>
+    );
+  }
+
+  return (
+    <div className="mt-5 flex flex-wrap gap-2">
+      {preferences.map((preference) => (
+        <span
+          className="rounded-full border border-outline-variant bg-surface-container-low px-3 py-1 text-xs font-bold text-on-surface-variant"
+          key={preference}
+        >
+          {preference}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function dashboardStatChips(progress: UserProgress | null): StatChip[] {
+  const visits = progress?.visits ?? 0;
+  const reflections = progress?.reflections ?? 0;
+  const level = progress?.level ?? 1;
+  const badges = progress?.achievements.length ?? 0;
+  const xp = progress?.xp ?? 0;
+
+  return [
+    {
+      icon: "gauge",
+      label: "Weekly Goal",
+      value: `${Math.min(visits, 5)}/5 visits`,
+      className: "bg-surface-container-lowest border border-outline-variant",
+      iconClassName: "text-primary",
+      valueClassName: "text-on-surface",
+    },
+    {
+      icon: "star",
+      label: `Level ${level}`,
+      value: levelName(level),
+      className: "bg-primary-container border border-primary/20",
+      iconClassName: "text-primary",
+      valueClassName: "text-on-primary-container",
+    },
+    {
+      icon: "fire",
+      label: `${reflections} Reflections`,
+      value: reflections === 0 ? "First reflection pending" : "Keep learning",
+      className: "bg-tertiary-container/30 border border-tertiary/20",
+      iconClassName: "text-tertiary",
+      valueClassName: "text-tertiary",
+    },
+    {
+      icon: "medal",
+      label: `${badges} ${badges === 1 ? "Badge" : "Badges"}`,
+      value: `${xp} XP earned`,
+      className: "bg-secondary-container/50",
+      iconClassName: "text-secondary",
+      valueClassName: "text-on-surface",
+    },
+  ];
+}
+
+function profileSummary(profile: UserProfile | null) {
+  if (!profile?.current_mood && !profile?.comfort_level) {
+    return "Welcome to OnSite. Complete onboarding to personalize your recommendations and dashboard.";
+  }
+
+  const mood = profile.current_mood
+    ? `${formatLabel(profile.current_mood)} mode`
+    : "your current mode";
+  const comfort = profile.comfort_level
+    ? formatLabel(profile.comfort_level)
+    : "comfortable";
+  const interests = profile.interests.length
+    ? profile.interests.map(formatLabel).join(", ")
+    : "study";
+
+  return `Welcome back. Your dashboard is tuned for ${mood}, ${comfort.toLowerCase()} spaces, and ${interests.toLowerCase()} goals.`;
+}
+
+function levelName(level: number) {
+  if (level >= 5) return "Community Guide";
+  if (level >= 3) return "Space Regular";
+  if (level >= 2) return "Focus Finder";
+  return "New Explorer";
+}
+
+function formatLabel(value: string) {
+  return value
+    .split(/[_-]/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function RecommendationSection() {
@@ -448,9 +555,12 @@ function RecommendationCard({
             </span>
           ))}
         </div>
-        <button className="mt-auto w-full rounded-xl bg-primary py-3 font-bold text-on-primary transition-all hover:bg-primary/90 active:scale-95">
+        <a
+          className="mt-auto block w-full rounded-xl bg-primary py-3 text-center font-bold text-on-primary transition-all hover:bg-primary/90 active:scale-95"
+          href={spacePath()}
+        >
           View Space
-        </button>
+        </a>
       </div>
     </article>
   );
@@ -540,10 +650,13 @@ function CompactRecommendationCard({
           >
             {category}
           </span>
-          <button className="flex items-center gap-1 text-xs font-extrabold text-primary transition-transform group-hover:translate-x-1">
+          <a
+            className="flex items-center gap-1 text-xs font-extrabold text-primary transition-transform group-hover:translate-x-1"
+            href={spacePath()}
+          >
             View Space
             <Icon className="h-3 w-3" name="arrowRight" />
-          </button>
+          </a>
         </div>
       </div>
     </article>
@@ -586,9 +699,12 @@ function DiscoveryCard({ alt, description, distance, image, name }: DiscoveryCar
             <Icon className="h-4 w-4" name="mapPin" />
             {distance}
           </span>
-          <button className="rounded-xl bg-primary px-6 py-2 text-sm font-bold text-on-primary shadow-sm transition-transform hover:bg-primary/90 active:scale-95">
+          <a
+            className="rounded-xl bg-primary px-6 py-2 text-sm font-bold text-on-primary shadow-sm transition-transform hover:bg-primary/90 active:scale-95"
+            href={spacePath()}
+          >
             View Space
-          </button>
+          </a>
         </div>
       </div>
     </article>
