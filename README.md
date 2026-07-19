@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OnSite
+
+OnSite is a third-space recommendation system for international students. The
+application uses a Next.js frontend and a local Flask + SQLite backend.
 
 ## Getting Started
 
-First, run the development server:
+Install frontend dependencies:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```powershell
+npm.cmd install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Set up and seed the backend:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+python -m venv backend/.venv
+backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+$env:FLASK_APP = "backend/run.py"
+backend/.venv/Scripts/python.exe -m flask seed
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Start the backend and frontend in separate terminals:
 
-## Learn More
+```powershell
+npm.cmd run backend:dev
+npm.cmd run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000). The Flask API runs at
+[http://127.0.0.1:5000/api](http://127.0.0.1:5000/api).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Backend details and endpoint documentation live in
+[`backend/README.md`](backend/README.md).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Verification
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```powershell
+npm.cmd run backend:test
+npm.cmd run lint
+npm.cmd run build
+```

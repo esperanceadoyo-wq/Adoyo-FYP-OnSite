@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/.pytest_cache
+**/__pycache__/
+*.py[cod]
 
 # next.js
 /.next/
@@ -32,6 +35,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!backend/.env.example
+
+# python
+/.venv/
+/backend/.venv/
+/backend/instance/
 
 # vercel
 .vercel

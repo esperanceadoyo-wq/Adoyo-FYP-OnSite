@@ -35,7 +35,7 @@ Before changing framework conventions, read the relevant local Next.js 16 docume
 2. **App Router Routes:** Each route should be implemented as `src/app/<route>/page.tsx`, with the home page at `src/app/page.tsx`.
 3. **Shared Styling:** Global styles belong in `src/app/globals.css`, imported only from `src/app/layout.tsx`.
 4. **Static Migration Content:** `src/content/pages.ts` and `StaticHtmlPage` are migration scaffolding for legacy pages. New or actively edited product surfaces should be converted into real React components instead of expanding raw HTML strings.
-5. **Server Endpoints:** API behavior belongs in App Router route handlers, for example `src/app/api/signup/route.ts`. Do not reintroduce an Express static server.
+5. **Server Endpoints:** The project backend is the Flask JSON API under `backend/`. Next.js App Router route handlers may be used as thin frontend proxies when useful, but domain logic and persistence belong in Flask. Do not reintroduce an Express static server.
 6. **Config Files Stay Root-Level:** Keep `package.json`, `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, and `.env*` files at the repository root.
 
 ---
@@ -80,7 +80,7 @@ Before changing framework conventions, read the relevant local Next.js 16 docume
 3. **Clear Architectural Layer Separation:**
    * **Presentation Layer:** Next.js pages and client-side React UI components.
    * **Application Layer:** State management and custom hook processing.
-   * **Data Layer:** Route handlers, persistence adapters, and future database integrations.
+   * **Data Layer:** Flask API routes, services, SQLAlchemy models, and SQLite persistence under `backend/`.
 
 ---
 
