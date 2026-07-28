@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { AppChrome } from "@/components/AppChrome";
 import { getInitials } from "@/lib/auth";
 import { getDashboardData } from "@/lib/dashboard-data";
 import { requireAuth } from "@/lib/server-auth";
@@ -23,21 +23,10 @@ export default async function ProfilePage() {
   const weeklyPercent = Math.min(100, Math.round((weeklyGoal / 5) * 100));
 
   return (
-    <main className="min-h-screen bg-[#0B1120] pb-12 text-white">
-      <div className="mx-auto my-8 max-w-6xl overflow-hidden rounded-2xl border border-[#1E293B] bg-[#0B1120] shadow-2xl">
+    <AppChrome activeHref="/profile" progress={progress} user={user}>
+      <div className="text-white">
+      <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border border-[#1E293B] bg-[#0B1120] shadow-2xl">
         <header className="relative z-10 pb-10 pt-12 text-center">
-          <div className="absolute left-6 top-8">
-            <Link
-              className="group flex items-center gap-2 transition-colors"
-              href="/dashboard"
-            >
-              <span className="material-symbols-outlined text-[#22D3EE]">
-                home
-              </span>
-              <span className="text-sm font-medium text-white">Home</span>
-            </Link>
-          </div>
-
           <div className="mb-3 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#22D3EE]/20 shadow-[0_0_20px_rgba(34,211,238,0.3)]">
               <span className="material-symbols-outlined text-4xl text-[#22D3EE]">
@@ -181,7 +170,8 @@ export default async function ProfilePage() {
           </div>
         </div>
       </div>
-    </main>
+      </div>
+    </AppChrome>
   );
 }
 

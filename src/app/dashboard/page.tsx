@@ -47,18 +47,18 @@ type IconName =
 
 const navItems = [
   { label: "Home", icon: "home", href: "/dashboard", active: true },
-  { label: "Saved", icon: "bookmark", href: "#" },
+  { label: "Saved", icon: "bookmark", href: "/saved" },
   { label: "Profile", icon: "person", href: "/profile" },
-  { label: "Explore", icon: "compass", href: "#" },
-  { label: "Leaderboard", icon: "leaderboard", href: "#" },
-  { label: "Admin", icon: "admin", href: "#" },
+  { label: "Explore", icon: "compass", href: "/explore" },
+  { label: "Leaderboard", icon: "leaderboard", href: "/leaderboard" },
+  { label: "Admin", icon: "admin", href: "/admin" },
 ] satisfies Array<{ label: string; icon: IconName; href: string; active?: boolean }>;
 
 const utilityNavItems = [
-  { label: "Notifications", icon: "notification" },
-  { label: "Settings", icon: "settings" },
+  { label: "Notifications", icon: "notification", href: "/notifications" },
+  { label: "Settings", icon: "settings", href: "/settings" },
   { label: "Log Out", icon: "logout", danger: true },
-] satisfies Array<{ label: string; icon: IconName; danger?: boolean }>;
+] satisfies Array<{ label: string; icon: IconName; danger?: boolean; href?: string }>;
 
 type StatChip = {
   icon: IconName;
@@ -287,7 +287,7 @@ function DesktopSidebar() {
           ) : (
             <a
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-on-surface-variant transition-all duration-200 hover:bg-surface-container-low active:scale-95"
-              href="#"
+              href={item.href}
               key={item.label}
             >
               <Icon className="h-5 w-5" name={item.icon} />
@@ -339,12 +339,13 @@ function DashboardHeader({
           <span className="sm:hidden">Adjust</span>
         </a>
         <div className="flex items-center gap-2">
-          <button
+          <a
             aria-label="Notifications"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant bg-surface-container-low text-on-surface-variant transition-colors hover:text-primary"
+            href="/notifications"
           >
             <Icon className="h-5 w-5" name="notification" />
-          </button>
+          </a>
           <button className="h-10 w-10 overflow-hidden rounded-full border-2 border-primary transition-transform active:scale-95">
             <span className="flex h-full w-full items-center justify-center bg-surface-variant text-on-surface-variant">
               <span className="text-xs font-extrabold">{getInitials(user.name)}</span>
