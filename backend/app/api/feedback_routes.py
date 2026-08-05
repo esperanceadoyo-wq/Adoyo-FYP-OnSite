@@ -59,12 +59,16 @@ def create_visit():
         space.longitude,
     )
     verification_radius = current_app.config["VISIT_VERIFICATION_RADIUS_METERS"]
+    distance_requirement_waived = (
+        space.slug in current_app.config["CHECK_IN_DISTANCE_EXEMPT_SLUGS"]
+    )
     verification = {
         "accuracy_meters": round(accuracy, 1),
         "allowed_distance_meters": verification_radius,
         "distance_meters": round(distance, 1),
+        "distance_requirement_waived": distance_requirement_waived,
     }
-    if distance > verification_radius:
+    if distance > verification_radius and not distance_requirement_waived:
         return jsonify(
             {
                 "error": "You are not close enough to this space to check in.",

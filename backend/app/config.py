@@ -24,6 +24,14 @@ class Config:
     VISIT_DUPLICATE_WINDOW_HOURS = int(
         os.getenv("VISIT_DUPLICATE_WINDOW_HOURS", "6")
     )
+    CHECK_IN_DISTANCE_EXEMPT_SLUGS = frozenset(
+        slug.strip()
+        for slug in os.getenv(
+            "CHECK_IN_DISTANCE_EXEMPT_SLUGS",
+            "cyberjaya-community-library",
+        ).split(",")
+        if slug.strip()
+    )
 
     @staticmethod
     def database_uri(instance_path: str) -> str:

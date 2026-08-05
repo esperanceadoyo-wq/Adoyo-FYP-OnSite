@@ -255,6 +255,7 @@ def test_location_check_in_creates_verified_visit_without_coordinates(
     assert body["visit"]["verification_method"] == "location"
     assert body["verification"]["distance_meters"] == 0
     assert body["verification"]["accuracy_meters"] == 12.5
+    assert body["verification"]["distance_requirement_waived"] is True
     assert "latitude" not in body["visit"]
     assert "longitude" not in body["visit"]
 
@@ -326,6 +327,31 @@ def test_location_check_in_rejects_unverified_readings(app, authenticated_client
 
     with app.app_context():
         assert db.session.scalar(db.select(db.func.count(Visit.id))) == 0
+
+
+def test_community_library_allows_check_in_from_any_distance(
+    authenticated_client,
+):
+    space = authenticated_client.get(
+        "/api/spaces/cyberjaya-community-library"
+    ).get_json()["space"]
+
+    response = authenticated_client.post(
+        "/api/visits",
+        json={
+            "accuracy_meters": 15,
+            "latitude": 3.139,
+            "location_consent": True,
+            "longitude": 101.6869,
+            "space_id": space["id"],
+        },
+    )
+    body = response.get_json()
+
+    assert response.status_code == 201
+    assert body["verification"]["distance_meters"] > 150
+    assert body["verification"]["distance_requirement_waived"] is True
+    assert body["visit"]["verification_method"] == "location"
 
 
 def test_visit_details_are_private_to_the_visit_owner(authenticated_client):

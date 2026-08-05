@@ -24,6 +24,7 @@ type VisitResponse = {
     accuracy_meters: number;
     allowed_distance_meters: number;
     distance_meters: number;
+    distance_requirement_waived: boolean;
   };
   visit?: Visit;
 };
@@ -79,6 +80,9 @@ export function CheckInButton({
             accuracy: String(data.verification.accuracy_meters),
             allowed: String(data.verification.allowed_distance_meters),
             distance: String(data.verification.distance_meters),
+            distanceWaived: String(
+              data.verification.distance_requirement_waived,
+            ),
             visitId: String(data.visit.id),
           });
           router.push(

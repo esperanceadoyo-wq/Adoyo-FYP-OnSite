@@ -46,6 +46,7 @@ export default async function VisitVerificationPage({
   const distance = parseMetric(firstValue(query.distance));
   const accuracy = parseMetric(firstValue(query.accuracy));
   const allowedDistance = parseMetric(firstValue(query.allowed));
+  const distanceRequirementWaived = firstValue(query.distanceWaived) === "true";
   const reflectionQuery = new URLSearchParams({ visitId: String(visit.id) });
 
   return (
@@ -85,8 +86,8 @@ export default async function VisitVerificationPage({
             Reflection unlocked.
           </h1>
           <p className="px-8 text-sm font-medium leading-relaxed text-slate-400 opacity-80">
-            Your location was verified against {space.name}. Precise coordinates
-            were not stored.
+            Your location reading was accepted for {space.name}. Precise
+            coordinates were not stored.
           </p>
         </section>
 
@@ -103,9 +104,15 @@ export default async function VisitVerificationPage({
           />
           <SensorCard
             icon="signal_cellular_4_bar"
-            label="Verification Range"
+            label={
+              distanceRequirementWaived
+                ? "Distance Requirement"
+                : "Verification Range"
+            }
             value={
-              allowedDistance === null
+              distanceRequirementWaived
+                ? "Waived for this space"
+                : allowedDistance === null
                 ? "Passed"
                 : `${formatMeters(allowedDistance)} maximum`
             }
