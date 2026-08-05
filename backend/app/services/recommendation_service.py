@@ -9,6 +9,7 @@ class RankedSpace:
     space: Space
     score: float
     reason: str
+    distance_km: float | None = None
 
 
 def _distance_km(
@@ -38,11 +39,13 @@ def rank_spaces(
     mood = context.get("mood") or profile.current_mood
     latitude = context.get("latitude")
     longitude = context.get("longitude")
+    location_consent = context.get("location_consent") is True
     ranked: list[RankedSpace] = []
 
     for space in spaces:
         score = 20.0
         reasons: list[str] = []
+        distance_km = None
         tags = {tag.lower() for tag in (space.atmosphere_tags or [])}
         amenities = {item.lower() for item in (space.amenities or [])}
 
@@ -90,17 +93,17 @@ def rank_spaces(
             reasons.append(f"it fits your {mood} mood today")
 
         if (
-            profile.location_consent
+            location_consent
             and latitude is not None
             and longitude is not None
             and space.latitude is not None
             and space.longitude is not None
         ):
-            distance = _distance_km(
+            distance_km = _distance_km(
                 float(latitude), float(longitude), space.latitude, space.longitude
             )
-            score += max(0, 10 - distance * 2)
-            if distance <= 2:
+            score += max(0, 10 - distance_km * 2)
+            if distance_km <= 2:
                 reasons.append("it is nearby")
 
         reason = (
@@ -113,6 +116,7 @@ def rank_spaces(
                 space=space,
                 score=round(min(score, 100), 1),
                 reason=reason,
+                distance_km=(round(distance_km, 2) if distance_km is not None else None),
             )
         )
 

@@ -25,6 +25,37 @@ def recommendations():
             {"error": "mood must be one of: focused, overwhelmed, social."}
         ), 400
 
+    location_consent = payload.get("location_consent", False)
+    if not isinstance(location_consent, bool):
+        return jsonify({"error": "location_consent must be a boolean."}), 400
+
+    has_latitude = "latitude" in payload
+    has_longitude = "longitude" in payload
+    if has_latitude != has_longitude:
+        return jsonify(
+            {"error": "latitude and longitude must be provided together."}
+        ), 400
+    if location_consent and not has_latitude:
+        return jsonify(
+            {"error": "Location coordinates are required when consent is granted."}
+        ), 400
+    if has_latitude:
+        if not location_consent:
+            return jsonify(
+                {"error": "Explicit location consent is required."}
+            ), 400
+        latitude = payload["latitude"]
+        longitude = payload["longitude"]
+        if (
+            isinstance(latitude, bool)
+            or isinstance(longitude, bool)
+            or not isinstance(latitude, (int, float))
+            or not isinstance(longitude, (int, float))
+        ):
+            return jsonify({"error": "Location coordinates must be numbers."}), 400
+        if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+            return jsonify({"error": "Location coordinates are out of range."}), 400
+
     profile = db.session.scalar(
         db.select(UserProfile).where(UserProfile.user_id == g.current_user.id)
     )
@@ -53,9 +84,8 @@ def recommendations():
             score=item.score,
             reason=item.reason,
             input_context={
-                key: payload[key]
-                for key in ("mood", "latitude", "longitude")
-                if key in payload
+                **({"mood": mood} if mood is not None else {}),
+                **({"location_used": True} if has_latitude else {}),
             },
         )
         db.session.add(record)
@@ -64,6 +94,7 @@ def recommendations():
                 "space": item.space.to_dict(),
                 "score": item.score,
                 "reason": item.reason,
+                "distance_km": item.distance_km,
             }
         )
 

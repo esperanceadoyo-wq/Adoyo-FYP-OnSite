@@ -279,3 +279,66 @@ def test_recommendations_exclude_inactive_spaces_and_allow_empty_results(
     assert response.get_json()["recommendations"] == []
     assert history.status_code == 200
     assert history.get_json()["recommendations"] == []
+
+
+def test_nearby_recommendations_do_not_persist_precise_coordinates(
+    authenticated_client,
+):
+    response = authenticated_client.post(
+        "/api/recommendations",
+        json={
+            "latitude": 2.9197,
+            "limit": 3,
+            "location_consent": True,
+            "longitude": 101.6367,
+            "mood": "focused",
+        },
+    )
+
+    assert response.status_code == 200
+    recommendations = response.get_json()["recommendations"]
+    assert len(recommendations) == 3
+    assert all(item["distance_km"] is not None for item in recommendations)
+
+    history = authenticated_client.get(
+        "/api/recommendations/history"
+    ).get_json()["recommendations"]
+    assert len(history) == 3
+    assert all(
+        item["input_context"] == {"location_used": True, "mood": "focused"}
+        for item in history
+    )
+    assert all("latitude" not in item["input_context"] for item in history)
+    assert all("longitude" not in item["input_context"] for item in history)
+
+
+def test_nearby_recommendations_require_valid_explicit_consent(
+    authenticated_client,
+):
+    cases = [
+        (
+            {"latitude": 2.92, "longitude": 101.65},
+            "Explicit location consent is required.",
+        ),
+        (
+            {"latitude": 2.92, "location_consent": True},
+            "latitude and longitude must be provided together.",
+        ),
+        (
+            {"location_consent": True},
+            "Location coordinates are required when consent is granted.",
+        ),
+        (
+            {
+                "latitude": 91,
+                "location_consent": True,
+                "longitude": 101.65,
+            },
+            "Location coordinates are out of range.",
+        ),
+    ]
+
+    for payload, error in cases:
+        response = authenticated_client.post("/api/recommendations", json=payload)
+        assert response.status_code == 400
+        assert response.get_json()["error"] == error

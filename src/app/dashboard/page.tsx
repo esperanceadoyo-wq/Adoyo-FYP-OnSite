@@ -7,6 +7,7 @@ import {
   DashboardGreeting,
   LogoutButton,
 } from "@/components/DashboardAuth";
+import { NearbyRecommendations } from "@/components/NearbyRecommendations";
 import {
   getDashboardData,
   type UserProfile,
@@ -84,6 +85,7 @@ export default async function DashboardPage() {
         <DashboardHeader progress={progress} user={user} />
         <div className="mx-auto mt-4 max-w-7xl space-y-8 px-6">
           <IntroSection profile={profile} progress={progress} user={user} />
+          <NearbyRecommendations mood={profile?.current_mood ?? null} />
           <RecommendationSection
             error={recommendationError}
             recommendations={recommendations}

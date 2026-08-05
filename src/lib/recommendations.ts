@@ -1,6 +1,7 @@
 import type { Space } from "@/lib/spaces";
 
 export type SpaceRecommendation = {
+  distance_km: number | null;
   reason: string;
   score: number;
   space: Space;
