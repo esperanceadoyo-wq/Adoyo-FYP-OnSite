@@ -36,4 +36,5 @@ def test_rank_spaces_prefers_profile_match(app):
     ranked = rank_spaces(profile, [cafe, library], {"mood": "focused"})
 
     assert ranked[0].space.name == "Quiet Library"
+    assert ranked[0].score == 90
     assert ranked[0].score > ranked[1].score

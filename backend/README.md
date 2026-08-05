@@ -5,22 +5,19 @@ The backend is a local Flask JSON API backed by SQLite. The database is created 
 
 ## Setup
 
-From the repository root in PowerShell:
+From the repository root on macOS, Linux, or Windows:
 
-```powershell
-python -m venv backend/.venv
-backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
-$env:FLASK_APP = "backend/run.py"
-backend/.venv/Scripts/python.exe -m flask seed
+```sh
+npm run backend:setup
 ```
 
 Run the backend:
 
-```powershell
-npm.cmd run backend:dev
+```sh
+npm run backend:dev
 ```
 
-The API is available at `http://127.0.0.1:5000/api`, with a health check at
+The API is available at `http://127.0.0.1:5001/api`, with a health check at
 `GET /api/health`. Run the Next.js frontend separately with `npm.cmd run dev`.
 
 Demo credentials after seeding:
@@ -41,12 +38,32 @@ Demo credentials after seeding:
 - `GET /api/achievements`
 - Admin-only `POST`, `PATCH`, and `DELETE` operations under `/api/spaces`
 
+The space catalog includes stable slugs, image metadata, opening hours, ratings,
+amenities, atmosphere tags, and social intensity. Filter the list with
+`?category=cafe` or `?social_intensity=1`; inactive spaces are never returned by
+public catalog endpoints.
+
 Authentication uses a signed HTTP-only Flask session cookie. Browser location is
 used for an individual recommendation request only when the profile contains
 explicit location consent; precise location history is not stored.
 
+## Database migrations
+
+Apply pending migrations with `npm run backend:migrate`, then seed demo records
+with `npm run backend:seed`. The setup command performs both operations.
+
+If an older local `backend/instance/onsite.db` was created before migrations were
+introduced, back it up and mark the initial schema as current once:
+
+```sh
+backend/.venv/bin/python -m flask --app backend/run.py db stamp head
+```
+
+On Windows, use `backend/.venv/Scripts/python.exe` for the same command. Do not
+stamp a database whose schema was modified independently.
+
 ## Tests
 
-```powershell
-npm.cmd run backend:test
+```sh
+npm run backend:test
 ```

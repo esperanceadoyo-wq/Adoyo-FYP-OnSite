@@ -1,14 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { featuredSpace, spacePath } from "@/lib/space-flow";
+import { catalogSpacePath } from "@/lib/space-flow";
 import { requireAuth } from "@/lib/server-auth";
+import { requireSpace } from "@/lib/server-spaces";
+import { getSpaceDetails } from "@/lib/spaces";
 
-export const metadata: Metadata = {
-  title: `Location Access | ${featuredSpace.name}`,
-};
+type SpaceRouteProps = { params: Promise<{ spaceId: string }> };
 
-export default async function LocationAccessPage() {
-  await requireAuth(spacePath("/location"));
+export async function generateMetadata({
+  params,
+}: SpaceRouteProps): Promise<Metadata> {
+  const { spaceId } = await params;
+  const result = await getSpaceDetails(spaceId);
+  return {
+    title:
+      result.status === "ok"
+        ? `Location Access | ${result.space.name}`
+        : "Location Access",
+  };
+}
+
+export default async function LocationAccessPage({ params }: SpaceRouteProps) {
+  const { spaceId } = await params;
+  await requireAuth(catalogSpacePath(spaceId, "/location"));
+  const space = await requireSpace(spaceId);
 
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden bg-background text-on-background">
@@ -18,7 +33,7 @@ export default async function LocationAccessPage() {
         <Link
           aria-label="Back to space details"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-highest/50 text-on-surface backdrop-blur-md transition-colors hover:bg-surface-container-highest active:scale-90"
-          href={spacePath()}
+          href={catalogSpacePath(space.slug)}
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
@@ -50,7 +65,7 @@ export default async function LocationAccessPage() {
             Verify Your Attendance
           </h1>
           <p className="text-sm leading-relaxed text-on-surface-variant md:text-base">
-            To confirm your arrival at this space and unlock your post-visit
+            To confirm your arrival at {space.name} and unlock your post-visit
             reflection, please share your location. We prioritize your privacy:
             this is a one-time check to verify you are at the space. We do not
             track your movements, store your history, or monitor you once you
@@ -61,14 +76,14 @@ export default async function LocationAccessPage() {
         <div className="w-full space-y-3">
           <Link
             className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary-container shadow-lg shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.98]"
-            href={spacePath("/verify")}
+            href={catalogSpacePath(space.slug, "/verify")}
           >
             <span className="material-symbols-outlined text-xl">my_location</span>
             Allow Location Access
           </Link>
           <Link
             className="flex h-12 w-full items-center justify-center rounded-xl border border-outline-variant/30 bg-transparent font-medium text-on-surface-variant transition-all hover:bg-surface-container-high active:scale-[0.98]"
-            href={spacePath()}
+            href={catalogSpacePath(space.slug)}
           >
             Not Now
           </Link>

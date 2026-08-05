@@ -1,8 +1,79 @@
+from app.extensions import db
+from app.models import Space
+
+
 def test_health_check(client):
     response = client.get("/api/health")
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "ok"
+
+
+def test_space_catalog_returns_display_metadata_and_supports_filters(client):
+    response = client.get("/api/spaces")
+
+    assert response.status_code == 200
+    spaces = response.get_json()["spaces"]
+    assert len(spaces) == 9
+    assert len({space["slug"] for space in spaces}) == 9
+    assert all(space["image_url"] for space in spaces)
+    assert all("/aida-public/" in space["image_url"] for space in spaces)
+    assert all(space["image_alt"] for space in spaces)
+
+    cafes = client.get("/api/spaces?category=cafe").get_json()["spaces"]
+    private_spaces = client.get(
+        "/api/spaces?social_intensity=1"
+    ).get_json()["spaces"]
+    assert len(cafes) == 3
+    assert len(private_spaces) == 3
+    assert all(space["category"] == "cafe" for space in cafes)
+    assert all(space["social_intensity"] == 1 for space in private_spaces)
+
+
+def test_space_details_support_numeric_ids_and_slugs(client):
+    catalog_space = client.get("/api/spaces?category=park").get_json()["spaces"][0]
+
+    by_id = client.get(f"/api/spaces/{catalog_space['id']}")
+    by_slug = client.get(f"/api/spaces/{catalog_space['slug']}")
+
+    assert by_id.status_code == 200
+    assert by_slug.status_code == 200
+    assert by_id.get_json()["space"] == by_slug.get_json()["space"]
+
+
+def test_space_details_return_not_found_for_unknown_slug(client):
+    response = client.get("/api/spaces/not-a-real-space")
+
+    assert response.status_code == 404
+    assert response.get_json()["error"] == "Space not found."
+
+
+def test_space_catalog_rejects_invalid_social_intensity(client):
+    response = client.get("/api/spaces?social_intensity=quiet")
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "social_intensity must be 1, 2, or 3."
+
+
+def test_space_catalog_hides_inactive_spaces(app, client):
+    with app.app_context():
+        space = db.session.scalar(
+            db.select(Space).where(Space.slug == "cyberjaya-community-library")
+        )
+        space.is_active = False
+        space_id = space.id
+        db.session.commit()
+
+    list_response = client.get("/api/spaces")
+    detail_response = client.get(f"/api/spaces/{space_id}")
+    slug_response = client.get("/api/spaces/cyberjaya-community-library")
+
+    assert list_response.status_code == 200
+    assert all(
+        space["id"] != space_id for space in list_response.get_json()["spaces"]
+    )
+    assert detail_response.status_code == 404
+    assert slug_response.status_code == 404
 
 
 def test_register_creates_authenticated_user_and_profile(client):
@@ -34,6 +105,74 @@ def test_register_rejects_weak_password(client):
 
     assert response.status_code == 400
     assert "Password" in response.get_json()["error"]
+
+
+def test_protected_routes_require_authentication(client):
+    response = client.get("/api/profile")
+
+    assert response.status_code == 401
+    assert response.get_json()["error"] == "Authentication required."
+
+
+def test_student_cannot_manage_spaces(authenticated_client):
+    response = authenticated_client.post(
+        "/api/spaces",
+        json={
+            "name": "Restricted Space",
+            "description": "Students cannot create this.",
+            "category": "library",
+            "address": "Campus",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.get_json()["error"] == "Administrator access required."
+
+
+def test_onboarding_profile_contract_does_not_infer_uncollected_fields(
+    authenticated_client,
+):
+    response = authenticated_client.put(
+        "/api/profile",
+        json={
+            "comfort_level": "private",
+            "current_mood": "focused",
+            "interests": ["study", "study", " collaborative "],
+            "noise_tolerance": "silent",
+            "preferred_amenities": ["wifi", "outlets"],
+            "preferred_social_intensity": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    profile = response.get_json()["profile"]
+    assert profile["comfort_level"] == "private"
+    assert profile["interests"] == ["study", "collaborative"]
+    assert profile["learning_goals"] == ["build confidence", "meet peers"]
+    assert profile["preferred_space_types"] == ["library", "cafe"]
+
+
+def test_profile_rejects_unknown_onboarding_values(authenticated_client):
+    response = authenticated_client.put(
+        "/api/profile", json={"comfort_level": "extreme"}
+    )
+
+    assert response.status_code == 400
+    assert "comfort_level must be one of" in response.get_json()["error"]
+
+
+def test_profile_allows_clearing_preferences_and_preserves_campus_name(
+    authenticated_client,
+):
+    response = authenticated_client.put(
+        "/api/profile",
+        json={"current_mood": None, "home_campus": "  Cyberjaya Campus  "},
+    )
+
+    assert response.status_code == 200
+    profile = response.get_json()["profile"]
+    assert profile["current_mood"] is None
+    assert profile["home_campus"] == "Cyberjaya Campus"
 
 
 def test_profile_recommendation_and_progress_flow(authenticated_client):
@@ -84,3 +223,59 @@ def test_profile_recommendation_and_progress_flow(authenticated_client):
     assert progress["reflections"] == 1
     assert progress["xp"] >= 90
     assert len(progress["achievements"]) == 2
+
+
+def test_recommendations_persist_ranked_results_and_history(authenticated_client):
+    response = authenticated_client.post(
+        "/api/recommendations", json={"mood": "focused", "limit": 3}
+    )
+
+    assert response.status_code == 200
+    recommendations = response.get_json()["recommendations"]
+    assert len(recommendations) == 3
+    assert all(item["space"]["slug"] for item in recommendations)
+    assert all(item["score"] >= 0 for item in recommendations)
+    assert all(item["reason"] for item in recommendations)
+
+    history_response = authenticated_client.get("/api/recommendations/history")
+    history = history_response.get_json()["recommendations"]
+    assert history_response.status_code == 200
+    assert len(history) == 3
+    assert all(item["input_context"] == {"mood": "focused"} for item in history)
+
+
+def test_recommendations_reject_invalid_context(authenticated_client):
+    invalid_mood = authenticated_client.post(
+        "/api/recommendations", json={"mood": "excited"}
+    )
+    invalid_limit = authenticated_client.post(
+        "/api/recommendations", json={"limit": True}
+    )
+    invalid_body = authenticated_client.post(
+        "/api/recommendations", json=["focused"]
+    )
+
+    assert invalid_mood.status_code == 400
+    assert "mood must be one of" in invalid_mood.get_json()["error"]
+    assert invalid_limit.status_code == 400
+    assert invalid_limit.get_json()["error"] == "limit must be a whole number."
+    assert invalid_body.status_code == 400
+    assert invalid_body.get_json()["error"] == "Request body must be a JSON object."
+
+
+def test_recommendations_exclude_inactive_spaces_and_allow_empty_results(
+    app, authenticated_client
+):
+    with app.app_context():
+        spaces = db.session.scalars(db.select(Space)).all()
+        for space in spaces:
+            space.is_active = False
+        db.session.commit()
+
+    response = authenticated_client.post("/api/recommendations", json={"limit": 8})
+    history = authenticated_client.get("/api/recommendations/history")
+
+    assert response.status_code == 200
+    assert response.get_json()["recommendations"] == []
+    assert history.status_code == 200
+    assert history.get_json()["recommendations"] == []

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getBackendUrl } from "@/lib/backend";
+import type { SpaceRecommendation } from "@/lib/recommendations";
 
 export type UserProfile = {
   comfort_level: string | null;
@@ -37,10 +38,58 @@ export async function getDashboardData() {
     fetchBackend<{ progress: UserProgress }>("/api/progress", cookieHeader),
   ]);
 
+  const recommendationResult = await fetchRecommendations(
+    cookieHeader,
+    profile?.profile.current_mood ?? null,
+  );
+
   return {
     profile: profile?.profile ?? null,
     progress: progress?.progress ?? null,
+    recommendationError: recommendationResult.error,
+    recommendations: recommendationResult.recommendations,
   };
+}
+
+async function fetchRecommendations(
+  cookieHeader: string,
+  mood: string | null,
+): Promise<{
+  error: string | null;
+  recommendations: SpaceRecommendation[];
+}> {
+  try {
+    const response = await fetch(`${getBackendUrl()}/api/recommendations`, {
+      body: JSON.stringify({ limit: 8, ...(mood ? { mood } : {}) }),
+      cache: "no-store",
+      headers: {
+        "content-type": "application/json",
+        cookie: cookieHeader,
+      },
+      method: "POST",
+    });
+    const data = (await response.json()) as {
+      error?: string;
+      recommendations?: SpaceRecommendation[];
+    };
+
+    if (!response.ok) {
+      return {
+        error: data.error ?? "Recommendations are temporarily unavailable.",
+        recommendations: [],
+      };
+    }
+
+    return {
+      error: null,
+      recommendations: data.recommendations ?? [],
+    };
+  } catch {
+    return {
+      error: "Recommendations are temporarily unavailable.",
+      recommendations: [],
+    };
+  }
 }
 
 async function fetchBackend<T>(path: string, cookieHeader: string) {

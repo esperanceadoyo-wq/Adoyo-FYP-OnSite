@@ -1,4 +1,4 @@
-const DEFAULT_BACKEND_URL = "http://127.0.0.1:5000";
+const DEFAULT_BACKEND_URL = "http://127.0.0.1:5001";
 
 export function getBackendUrl() {
   return (process.env.BACKEND_API_URL || DEFAULT_BACKEND_URL).replace(/\/$/, "");

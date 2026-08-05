@@ -1,21 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { featuredSpace, spacePath } from "@/lib/space-flow";
+import { catalogSpacePath } from "@/lib/space-flow";
 import { requireAuth } from "@/lib/server-auth";
+import { requireSpace } from "@/lib/server-spaces";
+import { getSpaceDetails } from "@/lib/spaces";
 
-export const metadata: Metadata = {
-  title: `Visit Verification | ${featuredSpace.name}`,
-};
+type SpaceRouteProps = { params: Promise<{ spaceId: string }> };
 
-export default async function VisitVerificationPage() {
-  await requireAuth(spacePath("/verify"));
+export async function generateMetadata({
+  params,
+}: SpaceRouteProps): Promise<Metadata> {
+  const { spaceId } = await params;
+  const result = await getSpaceDetails(spaceId);
+  return {
+    title:
+      result.status === "ok"
+        ? `Visit Verification | ${result.space.name}`
+        : "Visit Verification",
+  };
+}
+
+export default async function VisitVerificationPage({ params }: SpaceRouteProps) {
+  const { spaceId } = await params;
+  await requireAuth(catalogSpacePath(spaceId, "/verify"));
+  const space = await requireSpace(spaceId);
 
   return (
     <main className="flex min-h-[max(884px,100dvh)] flex-col overflow-hidden bg-[#0F172A] text-white antialiased">
       <header className="flex w-full items-center px-6 pb-4 pt-12">
         <Link
           className="flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700 active:scale-95"
-          href={spacePath()}
+          href={catalogSpacePath(space.slug)}
         >
           <span className="material-symbols-outlined text-lg">arrow_back</span>
           Back to Spaces
@@ -47,7 +62,7 @@ export default async function VisitVerificationPage() {
             Reflection unlocked.
           </h1>
           <p className="px-8 text-sm font-medium leading-relaxed text-slate-400 opacity-80">
-            You must be within 5 meters of this location to check in.
+            You must be within 5 meters of {space.name} to check in.
           </p>
         </section>
 
@@ -72,7 +87,7 @@ export default async function VisitVerificationPage() {
         <section className="w-full pt-5">
           <Link
             className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-5 text-lg font-bold text-[#0F172A] shadow-[0_0_20px_rgba(42,184,203,0.3)] transition-all active:scale-95"
-            href={spacePath("/reflection")}
+            href={catalogSpacePath(space.slug, "/reflection")}
           >
             View Reflection
             <span className="material-symbols-outlined font-bold">

@@ -117,11 +117,9 @@ async function savePreferences(action: HTMLElement) {
     comfort_level: comfort,
     current_mood: selectedValue('[data-group="mood"] .chip.active'),
     interests: selectedValues('[data-category="interests"].active'),
-    learning_goals: selectedValues('[data-category="interests"].active'),
     noise_tolerance: selectedValue('[data-group="noise"] .chip.active'),
     preferred_amenities: selectedValues('[data-category="amenities"].active'),
     preferred_social_intensity: socialIntensityForComfort(comfort),
-    preferred_space_types: comfort ? [comfort] : [],
   };
   const status = document.querySelector<HTMLElement>("[data-onboarding-status]");
 

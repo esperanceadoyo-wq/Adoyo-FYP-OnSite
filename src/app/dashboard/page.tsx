@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   DashboardAuthPanel,
@@ -13,7 +14,9 @@ import {
 } from "@/lib/dashboard-data";
 import { requireAuth } from "@/lib/server-auth";
 import { getInitials, type AuthUser } from "@/lib/auth";
-import { spacePath } from "@/lib/space-flow";
+import type { SpaceRecommendation } from "@/lib/recommendations";
+import { catalogSpacePath } from "@/lib/space-flow";
+import type { Space } from "@/lib/spaces";
 
 export const metadata: Metadata = {
   title: "Azure Horizon | OnSite Community Hub",
@@ -69,160 +72,10 @@ type StatChip = {
   valueClassName: string;
 };
 
-const topRecommendations = [
-  {
-    name: "Open Co-working Lounge",
-    distance: "0.5 mi",
-    rating: "4.9",
-    description:
-      "A breathtaking vertical space featuring panoramic views and silent zones for deep work.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBBld25p38CY6yFPk4PzlR2ZsxjddigtODRoPk2nGunIgKaHrkQ1gSHzpdQ4a0lacW1MP6AJ-RcthqqrG4nP_Z5kmdpFRv715SsF__3kOj1HmzmpOwG8SL8-_R-EHvg4BwFEIswhAduGYkSPEgavWKY9GYGPazqQQNBNEiYU_Yun9jifiLJ6nkc5AQ3av6yqVeuM79CAYU2imok4GfzmjW3w_nztaGlIRDQChfsa9XVO1XFAUZgSpK4fQ",
-    alt: "A stunning futuristic architectural shot of a massive circular library.",
-    tags: [
-      { label: "Focused", icon: "target", className: "bg-primary-container text-on-primary-container" },
-      { label: "Casual", icon: "coffee", className: "bg-tertiary-container text-on-tertiary-container" },
-      { label: "Study", icon: "book", className: "bg-secondary-container text-on-secondary-container" },
-    ],
-  },
-  {
-    name: "Cyberjaya Community Library",
-    distance: "1.2 mi",
-    rating: "4.8",
-    description:
-      "High-speed connectivity and ergonomic designs for the modern digital explorer.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuARdwxubbd1dBv3mETLLuZn07tY6fc-ZmyMKFgulRPe3eaJCul6g_xzKmDla87vWFs0nhbMc1PaXc1sdAqVocNKfNDOm8PvZuSCvkYnZV-mIJTCuMaCJSk4aJJuUk1hT1GsIYPh8TiBC6Vhe_Eofrii_OnO0k7m4X6NhUtNuJkBwUQPpPm4zjQV2dk_5zPM6gGGgjKvd8PCXqDPNe11uvNCb_BodQWS2o27ButX0qST3heFLzxGp-d0RA",
-    alt: "An ultra-modern co-working hub.",
-    tags: [
-      { label: "Focused", icon: "target", className: "bg-primary-container text-on-primary-container" },
-      { label: "Private", icon: "lock", className: "bg-secondary-container text-on-secondary-container" },
-      { label: "Collaborative", icon: "users", className: "bg-tertiary-container text-on-tertiary-container" },
-    ],
-  },
-  {
-    name: "Coffee Bean & Tea Leaf (DPULZE)",
-    distance: "0.8 mi",
-    rating: "4.7",
-    description:
-      "A creative community space for collaborative projects and networking events.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAVucMYHiC4R81jiibBG_T1jDyYkrbSDaQ_jIvtXgeNn83gI6mBT28LOkWpiWBkCE5U2mWcfOanf038_J7MH2ByPyylTF_cpv42TGtstrURVBNZ6Pl90iHmICmGWUlVIIM_I_QM6u8OftO7H4LKK3tDTdx7zfoE77K7rGtwyzITV87c8ST-vJRvdX6Py72w7qnMAjcF5JKVIfbL1cACDXHJae54uNGnwb4ElsZyOiuSNw36bJOzo0v4RQ",
-    alt: "A warm industrial-style tech loft.",
-    tags: [
-      { label: "Social", icon: "users", className: "bg-tertiary-container text-on-tertiary-container" },
-      { label: "Public", icon: "public", className: "bg-secondary-container text-on-secondary-container" },
-    ],
-  },
-] satisfies Array<Recommendation>;
-
-const topSpaces = [
-  {
-    name: "BookXcess @ Tamarind",
-    label: "Top Private",
-    description: "Immersive library with quiet reading nooks.",
-    icon: "book",
-  },
-  {
-    name: "Zus Coffee",
-    label: "Top Casual",
-    description: "Vibrant spot with high-speed internet.",
-    icon: "coffee",
-  },
-  {
-    name: "Tamarind Square Courtyard",
-    label: "Top Public",
-    description: "Lush green space for fresh-air brainstorming.",
-    icon: "park",
-  },
-] satisfies Array<{
-  name: string;
-  label: string;
-  description: string;
-  icon: IconName;
-}>;
-
-const compactRecommendations = [
-  {
-    name: "The Corner Nook",
-    description: "Personal pods for deep focus.",
-    category: "Private",
-    categoryClassName: "bg-primary-container text-on-primary-container",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBBoNaQBevWtptTr80cP0Ua7mxbJn-jDMBAVYlS588d059E8E4Dt0xmSQQ8H9yHPT21gaq1E4FNmdYPCP7u-aUmMZSV6sXLd1hO10P1ckYa-c4aFe2s3fQwgcbxrkXQeq_cYBwrFEBuOWgT0DhrnsOcQYYQdEwmoWqi9H02B6Vgq0hDlWGMS8678ZpbDrCifpMUuFO_yE2HZ9YCwK7h04OFfDCbIvOgQEN97Xfi3YByKMMh6ZPeDIG7-A",
-    alt: "A cozy and minimalist reading nook.",
-  },
-  {
-    name: "Beacon Center",
-    description: "Vibrant community hub for peers.",
-    category: "Casual",
-    categoryClassName: "bg-tertiary-container text-on-tertiary-container",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBoPnl0NWAWHp3l1RXhk-cwJT25MgEsOSUVAslylY6gqJnOhIdJEJUdiYSMJeyuuBWZydx5zWKVkXQ5axH2QsKnwhriaU-wvugGjapHs2OvNgwoWYc5sW_JVRMMbuPL7PfA8WzZ2nIQHfodfLsrthiXq7ui-j8I5FFUXWaeLJMd-_xpGsXUt-Cah1iZ56H0rWU0X4L523tzl1PkhX3oZmv6dVyT8LYakkiE3p5J30oY031z_ySZVATEPg",
-    alt: "A bright and airy community center.",
-  },
-  {
-    name: "The Greenhouse",
-    description: "Study surrounded by nature.",
-    category: "Public",
-    categoryClassName: "bg-secondary-container text-on-secondary-container",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBkqm6o29QbzMolmJndMyH49Y6EI7NaQMPprpKwPBted61OAcnDGlgsabygYFiIVc8D3iPk9WDalwMKM590RY4OGxrC2r-emZ-eQTn845B3Ccf7nJ05kiGAh2b3ceKBrk8GB_IJSIhgQhgDyJN1oNCCDtveyHmLwHzm0D_uOAJMFXH38hx-efUS75WFiEjRUnlV5-vO5eoFp08eoxaOrccZQTVIcJ6lnxyGVSExZO_V-If4_-WaPEiYzw",
-    alt: "An indoor greenhouse-style study lounge.",
-  },
-] satisfies Array<CompactRecommendation>;
-
-const discoveryCards = [
-  {
-    name: "The Reading Room",
-    distance: "1.8 mi",
-    description:
-      "A traditional sanctuary for focused reading and archival research. Preferred by Level 5 Explorers.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDojvlVnK8nryhfLNpiRK-G0JqZgIZBECEAB74w4rcCXt18cR2AsibECt5bH4cwr7FlgriX2NAl-e2IPpsNev1kVTessZ-aaI3Dj55IdVcZESPEdokhUesak5PkPB424v_9W8TQBlZqtsqQgUQ28Ec9TJ12TYnZ17UI9rfnYqdJo3jRVidqvwnkgnyO6gO4Ea4PFNlwfTNIwZ1PwLGnPcqsoKXVhS720VD8_CkSdhY84YbDwQZs01xosg",
-    alt: "A classic elegant reading room.",
-  },
-  {
-    name: "Glass Box Collective",
-    distance: "2.4 mi",
-    description:
-      "An experimental space for digital creators and boundary-pushers. High-energy environment.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAwOI9k2xcyhSOqWCYJrPBXxjw5E56lpuT4T4tL1fcv8cbnataxwy9IoKqkiSSKkj7zl2C41ewrjPo1k9_yzhINsU1PEcEL6p_i1B_bpiese6f7zZ-tFd5I2RTG9FuQRv-iUuavmXrH2qqKWG-tvNEoKRpO2Bhhez3WCZ3rHJlFdYu_B8EJedUM7Ahp0lYSypnTxbNgYNeTf_cwiYjlfjuQrwqF2PQ7ca1FnggSXh_vYY38IONjBxkPAw",
-    alt: "An innovative architectural glass box structure.",
-  },
-] satisfies Array<DiscoveryCard>;
-
-type Recommendation = {
-  alt: string;
-  description: string;
-  distance: string;
-  image: string;
-  name: string;
-  rating: string;
-  tags: Array<{ className: string; icon: IconName; label: string }>;
-};
-
-type CompactRecommendation = {
-  alt: string;
-  category: string;
-  categoryClassName: string;
-  description: string;
-  image: string;
-  name: string;
-};
-
-type DiscoveryCard = {
-  alt: string;
-  description: string;
-  distance: string;
-  image: string;
-  name: string;
-};
-
 export default async function DashboardPage() {
   const user = await requireAuth("/dashboard");
-  const { profile, progress } = await getDashboardData();
+  const { profile, progress, recommendationError, recommendations } =
+    await getDashboardData();
 
   return (
     <main className="min-h-screen bg-background pb-24 text-on-background md:pb-8">
@@ -231,9 +84,16 @@ export default async function DashboardPage() {
         <DashboardHeader progress={progress} user={user} />
         <div className="mx-auto mt-4 max-w-7xl space-y-8 px-6">
           <IntroSection profile={profile} progress={progress} user={user} />
-          <RecommendationSection />
-          <CompactRecommendationSection />
-          <DiscoverySection />
+          <RecommendationSection
+            error={recommendationError}
+            recommendations={recommendations}
+          />
+          {recommendations.length > 3 ? (
+            <CompactRecommendationSection recommendations={recommendations.slice(3, 6)} />
+          ) : null}
+          {recommendations.length > 6 ? (
+            <DiscoverySection recommendations={recommendations.slice(6, 8)} />
+          ) : null}
         </div>
       </section>
     </main>
@@ -492,58 +352,78 @@ function levelName(level: number) {
 
 function formatLabel(value: string) {
   return value
-    .split(/[_-]/)
+    .split(/[\s_-]+/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
 
-function RecommendationSection() {
+function RecommendationSection({
+  error,
+  recommendations,
+}: {
+  error: string | null;
+  recommendations: SpaceRecommendation[];
+}) {
   return (
     <section className="space-y-6">
       <SectionTitle icon="spark">Top Recommendations</SectionTitle>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-4">
-        {topRecommendations.map((recommendation) => (
-          <RecommendationCard key={recommendation.name} {...recommendation} />
-        ))}
-        <TopSpacesPanel />
-      </div>
+      {error ? (
+        <RecommendationState
+          icon="lock"
+          message={error}
+          title="Recommendations unavailable"
+        />
+      ) : recommendations.length === 0 ? (
+        <RecommendationState
+          icon="compass"
+          message="There are no active spaces to recommend right now."
+          title="No recommendations yet"
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-4">
+          {recommendations.slice(0, 3).map((recommendation) => (
+            <RecommendationCard
+              key={recommendation.space.id}
+              recommendation={recommendation}
+            />
+          ))}
+          <TopSpacesPanel recommendations={recommendations.slice(0, 3)} />
+        </div>
+      )}
     </section>
   );
 }
 
 function RecommendationCard({
-  alt,
-  description,
-  distance,
-  image,
-  name,
-  rating,
-  tags,
-}: Recommendation) {
+  recommendation,
+}: {
+  recommendation: SpaceRecommendation;
+}) {
+  const { reason, score, space } = recommendation;
+  const tags = recommendationTags(space);
+
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[2rem] border border-outline-variant bg-surface-container-low shadow-sm transition-all duration-300 hover:shadow-md">
       <div className="relative h-48 overflow-hidden">
-        <Image
-          alt={alt}
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
-          fill
+        <SpaceImage
+          className="transition-transform duration-500 group-hover:scale-110"
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw"
-          src={image}
+          space={space}
         />
         <div className="absolute right-4 top-4 flex items-center gap-1 rounded-lg bg-surface-container-lowest/80 px-2 py-1 text-xs font-bold text-on-surface backdrop-blur">
-          <Icon className="h-4 w-4 text-yellow-400" name="star" />
-          {rating}
+          <Icon className="h-4 w-4 text-primary" name="target" />
+          {formatScore(score)} match
         </div>
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="mb-2 flex items-start justify-between">
-          <h4 className="text-lg font-extrabold text-on-surface">{name}</h4>
+          <h4 className="text-lg font-extrabold text-on-surface">{space.name}</h4>
           <span className="text-[10px] font-bold text-on-surface-variant">
-            {distance}
+            {space.rating !== null ? `${space.rating.toFixed(1)}/5` : "New"}
           </span>
         </div>
         <p className="mb-4 line-clamp-2 text-sm text-on-surface-variant">
-          {description}
+          {space.description}
         </p>
         <div className="custom-scrollbar mb-6 flex items-center gap-2 overflow-x-auto pb-1">
           {tags.map((tag) => (
@@ -556,18 +436,25 @@ function RecommendationCard({
             </span>
           ))}
         </div>
-        <a
+        <p className="mb-5 text-xs font-medium leading-relaxed text-primary">
+          {reason}
+        </p>
+        <Link
           className="mt-auto block w-full rounded-xl bg-primary py-3 text-center font-bold text-on-primary transition-all hover:bg-primary/90 active:scale-95"
-          href={spacePath()}
+          href={catalogSpacePath(space.slug)}
         >
           View Space
-        </a>
+        </Link>
       </div>
     </article>
   );
 }
 
-function TopSpacesPanel() {
+function TopSpacesPanel({
+  recommendations,
+}: {
+  recommendations: SpaceRecommendation[];
+}) {
   return (
     <aside className="hidden flex-col gap-4 xl:flex">
       <div className="flex h-full flex-col rounded-[2rem] border border-outline-variant bg-surface-container-low p-6">
@@ -576,25 +463,29 @@ function TopSpacesPanel() {
           Top Spaces
         </h4>
         <div className="space-y-4">
-          {topSpaces.map((space) => (
-            <div className="flex flex-col gap-1" key={space.name}>
+          {recommendations.map(({ reason, score, space }) => (
+            <Link
+              className="flex flex-col gap-1"
+              href={catalogSpacePath(space.slug)}
+              key={space.id}
+            >
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest text-primary shadow-sm">
-                  <Icon className="h-5 w-5" name={space.icon} />
+                  <Icon className="h-5 w-5" name={categoryIcon(space.category)} />
                 </div>
                 <div>
                   <h5 className="text-sm font-bold text-on-surface">
                     {space.name}
                   </h5>
                   <p className="text-[10px] font-bold uppercase text-primary">
-                    {space.label}
+                    {formatScore(score)} match
                   </p>
                 </div>
               </div>
               <p className="mt-1 text-[10px] leading-relaxed text-on-surface-variant">
-                {space.description}
+                {reason}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
         <div className="mt-auto rounded-xl border border-outline-variant bg-surface-container-lowest p-3">
@@ -609,15 +500,19 @@ function TopSpacesPanel() {
   );
 }
 
-function CompactRecommendationSection() {
+function CompactRecommendationSection({
+  recommendations,
+}: {
+  recommendations: SpaceRecommendation[];
+}) {
   return (
     <section className="space-y-6">
       <SectionTitle icon="spark">How About These?</SectionTitle>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {compactRecommendations.map((recommendation) => (
+        {recommendations.map((recommendation) => (
           <CompactRecommendationCard
-            key={recommendation.name}
-            {...recommendation}
+            key={recommendation.space.id}
+            recommendation={recommendation}
           />
         ))}
       </div>
@@ -626,90 +521,187 @@ function CompactRecommendationSection() {
 }
 
 function CompactRecommendationCard({
-  alt,
-  category,
-  categoryClassName,
-  description,
-  image,
-  name,
-}: CompactRecommendation) {
+  recommendation,
+}: {
+  recommendation: SpaceRecommendation;
+}) {
+  const { reason, score, space } = recommendation;
+
   return (
     <article className="group flex h-40 items-center overflow-hidden rounded-[2rem] border border-outline-variant bg-surface-container-low p-3 shadow-sm">
       <div className="relative h-full w-32 shrink-0 overflow-hidden rounded-2xl">
-        <Image alt={alt} className="object-cover" fill sizes="128px" src={image} />
+        <SpaceImage sizes="128px" space={space} />
       </div>
       <div className="flex h-full w-full flex-col justify-between px-4 py-2">
         <div>
-          <h4 className="font-extrabold text-on-surface">{name}</h4>
-          <p className="line-clamp-1 text-xs text-on-surface-variant">
-            {description}
+          <h4 className="font-extrabold text-on-surface">{space.name}</h4>
+          <p className="line-clamp-2 text-xs text-on-surface-variant">
+            {reason}
           </p>
         </div>
         <div className="mt-auto flex items-center justify-between gap-3">
           <span
-            className={`rounded-lg px-2 py-1 text-[10px] font-bold uppercase ${categoryClassName}`}
+            className="rounded-lg bg-primary-container px-2 py-1 text-[10px] font-bold uppercase text-on-primary-container"
           >
-            {category}
+            {formatScore(score)} match
           </span>
-          <a
+          <Link
             className="flex items-center gap-1 text-xs font-extrabold text-primary transition-transform group-hover:translate-x-1"
-            href={spacePath()}
+            href={catalogSpacePath(space.slug)}
           >
             View Space
             <Icon className="h-3 w-3" name="arrowRight" />
-          </a>
+          </Link>
         </div>
       </div>
     </article>
   );
 }
 
-function DiscoverySection() {
+function DiscoverySection({
+  recommendations,
+}: {
+  recommendations: SpaceRecommendation[];
+}) {
   return (
     <section className="space-y-6 pb-12">
       <SectionTitle icon="fire" iconClassName="text-tertiary">
         Why Don&apos;t You Try These Next?
       </SectionTitle>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {discoveryCards.map((card) => (
-          <DiscoveryCard key={card.name} {...card} />
+        {recommendations.map((recommendation) => (
+          <DiscoveryCard
+            key={recommendation.space.id}
+            recommendation={recommendation}
+          />
         ))}
       </div>
     </section>
   );
 }
 
-function DiscoveryCard({ alt, description, distance, image, name }: DiscoveryCard) {
+function DiscoveryCard({
+  recommendation,
+}: {
+  recommendation: SpaceRecommendation;
+}) {
+  const { reason, score, space } = recommendation;
+
   return (
     <article className="group flex flex-col overflow-hidden rounded-[2rem] border border-outline-variant bg-surface-container-low shadow-sm md:flex-row">
       <div className="relative h-48 w-full shrink-0 overflow-hidden md:h-auto md:w-56">
-        <Image alt={alt} className="object-cover" fill sizes="224px" src={image} />
+        <SpaceImage sizes="224px" space={space} />
       </div>
       <div className="flex flex-1 flex-col justify-between p-6">
         <div>
           <div className="mb-2 flex items-start justify-between gap-3">
-            <h4 className="text-xl font-extrabold text-on-surface">{name}</h4>
+            <h4 className="text-xl font-extrabold text-on-surface">{space.name}</h4>
             <span className="rounded bg-tertiary/20 px-2 py-1 text-[10px] font-bold uppercase text-tertiary">
-              Discovery
+              {formatScore(score)} match
             </span>
           </div>
-          <p className="mb-4 text-sm text-on-surface-variant">{description}</p>
+          <p className="mb-4 text-sm text-on-surface-variant">{reason}</p>
         </div>
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1 text-xs font-bold text-on-surface-variant">
-            <Icon className="h-4 w-4" name="mapPin" />
-            {distance}
+            <Icon className="h-4 w-4" name={categoryIcon(space.category)} />
+            {formatLabel(space.category)}
           </span>
-          <a
+          <Link
             className="rounded-xl bg-primary px-6 py-2 text-sm font-bold text-on-primary shadow-sm transition-transform hover:bg-primary/90 active:scale-95"
-            href={spacePath()}
+            href={catalogSpacePath(space.slug)}
           >
             View Space
-          </a>
+          </Link>
         </div>
       </div>
     </article>
   );
+}
+
+function RecommendationState({
+  icon,
+  message,
+  title,
+}: {
+  icon: IconName;
+  message: string;
+  title: string;
+}) {
+  return (
+    <div className="flex min-h-44 items-center gap-4 rounded-[2rem] border border-outline-variant bg-surface-container-low p-8">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary">
+        <Icon className="h-6 w-6" name={icon} />
+      </div>
+      <div>
+        <h4 className="font-extrabold text-on-surface">{title}</h4>
+        <p className="mt-1 text-sm text-on-surface-variant">{message}</p>
+      </div>
+    </div>
+  );
+}
+
+function SpaceImage({
+  className = "",
+  sizes,
+  space,
+}: {
+  className?: string;
+  sizes: string;
+  space: Space;
+}) {
+  if (!space.image_url) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-surface-container-highest text-on-surface-variant">
+        <Icon className="h-8 w-8" name={categoryIcon(space.category)} />
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      alt={space.image_alt || space.name}
+      className={`object-cover ${className}`}
+      fill
+      sizes={sizes}
+      src={space.image_url}
+    />
+  );
+}
+
+function recommendationTags(space: Space) {
+  const styles = [
+    "bg-primary-container text-on-primary-container",
+    "bg-tertiary-container text-on-tertiary-container",
+    "bg-secondary-container text-on-secondary-container",
+  ];
+
+  return space.atmosphere_tags.slice(0, 3).map((tag, index) => ({
+    className: styles[index],
+    icon: tagIcon(tag),
+    label: formatLabel(tag),
+  }));
+}
+
+function tagIcon(tag: string): IconName {
+  const normalizedTag = tag.toLowerCase();
+  if (/study|read|focus|academic/.test(normalizedTag)) return "book";
+  if (/social|community|collaborat/.test(normalizedTag)) return "users";
+  if (/nature|calm|outdoor|reflection/.test(normalizedTag)) return "park";
+  return "target";
+}
+
+function categoryIcon(category: string): IconName {
+  const normalizedCategory = category.toLowerCase();
+  if (/library|bookstore/.test(normalizedCategory)) return "book";
+  if (/cafe|coffee/.test(normalizedCategory)) return "coffee";
+  if (/park|courtyard/.test(normalizedCategory)) return "park";
+  if (/event/.test(normalizedCategory)) return "users";
+  return "public";
+}
+
+function formatScore(score: number) {
+  return `${Math.round(score)}%`;
 }
 
 function SectionTitle({

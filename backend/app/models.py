@@ -87,6 +87,7 @@ class Space(TimestampMixin, db.Model):
     __tablename__ = "spaces"
 
     id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(180), nullable=False, unique=True, index=True)
     name = db.Column(db.String(160), nullable=False)
     description = db.Column(db.Text, nullable=False)
     category = db.Column(db.String(50), nullable=False, index=True)
@@ -102,11 +103,15 @@ class Space(TimestampMixin, db.Model):
     safety_notes = db.Column(db.Text)
     cultural_notes = db.Column(db.Text)
     accessibility_features = db.Column(db.JSON, nullable=False, default=list)
+    image_url = db.Column(db.String(2048))
+    image_alt = db.Column(db.String(255))
+    rating = db.Column(db.Float)
     is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
 
     def to_dict(self) -> dict:
         return {
             "id": self.id,
+            "slug": self.slug,
             "name": self.name,
             "description": self.description,
             "category": self.category,
@@ -122,6 +127,9 @@ class Space(TimestampMixin, db.Model):
             "safety_notes": self.safety_notes,
             "cultural_notes": self.cultural_notes,
             "accessibility_features": self.accessibility_features or [],
+            "image_url": self.image_url,
+            "image_alt": self.image_alt,
+            "rating": self.rating,
             "is_active": self.is_active,
         }
 

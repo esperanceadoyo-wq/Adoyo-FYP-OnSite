@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "backend:dev": ".\\backend\\.venv\\Scripts\\python.exe backend/run.py",
-    "backend:test": ".\\backend\\.venv\\Scripts\\python.exe -m pytest backend/tests",
+    "backend:setup": "node scripts/backend.mjs setup",
+    "backend:dev": "node scripts/backend.mjs dev",
+    "backend:test": "node scripts/backend.mjs test",
+    "backend:migrate": "node scripts/backend.mjs migrate",
+    "backend:seed": "node scripts/backend.mjs seed",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

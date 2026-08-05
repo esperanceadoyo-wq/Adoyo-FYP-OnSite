@@ -21,7 +21,7 @@ const tagQuestions: Record<string, string> = {
     "What was your favorite comfort feature (e.g., seating, lighting, temp)?",
 };
 
-export function ReflectionForm() {
+export function ReflectionForm({ spaceName }: { spaceName: string }) {
   const router = useRouter();
   const [noise, setNoise] = useState("");
   const [vibe, setVibe] = useState("");
@@ -54,7 +54,7 @@ export function ReflectionForm() {
               Post-Visit Reflection
             </h1>
             <p className="text-base font-normal leading-normal text-[#94A3B8]">
-              Tell us about your experience in this space.
+              Tell us about your experience at {spaceName}.
             </p>
           </div>
 

@@ -7,8 +7,8 @@ from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from .api import BLUEPRINTS
-from .config import Config
-from .extensions import db
+from .config import BACKEND_ROOT, Config
+from .extensions import db, migrate
 from .seed import seed_database
 
 
@@ -28,6 +28,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         app.config.update(test_config)
 
     db.init_app(app)
+    migrate.init_app(app, db, directory=str(BACKEND_ROOT / "migrations"))
     CORS(
         app,
         origins=[app.config["FRONTEND_ORIGIN"]],
@@ -57,7 +58,6 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.cli.command("seed")
     def seed_command():
-        db.create_all()
         seed_database()
         click.echo("Seeded demo spaces, achievements, and user.")
 

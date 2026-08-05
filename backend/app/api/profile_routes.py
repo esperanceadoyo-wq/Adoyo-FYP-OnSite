@@ -12,6 +12,11 @@ STRING_FIELDS = {
     "noise_tolerance",
     "current_mood",
 }
+STRING_CHOICES = {
+    "comfort_level": {"private", "casual", "public"},
+    "current_mood": {"focused", "social", "overwhelmed"},
+    "noise_tolerance": {"silent", "hum", "noisy"},
+}
 LIST_FIELDS = {
     "learning_goals",
     "interests",
@@ -47,7 +52,19 @@ def update_profile():
     for field in STRING_FIELDS:
         if field in payload:
             value = payload[field]
-            setattr(profile, field, str(value).strip() if value is not None else None)
+            if value is not None and not isinstance(value, str):
+                return jsonify({"error": f"{field} must be a string or null."}), 400
+
+            normalized_value = value.strip() if value is not None else None
+            if field in STRING_CHOICES and normalized_value is not None:
+                normalized_value = normalized_value.lower()
+                if normalized_value not in STRING_CHOICES[field]:
+                    choices = ", ".join(sorted(STRING_CHOICES[field]))
+                    return jsonify(
+                        {"error": f"{field} must be one of: {choices}."}
+                    ), 400
+
+            setattr(profile, field, normalized_value or None)
 
     for field in LIST_FIELDS:
         if field in payload:
@@ -56,11 +73,12 @@ def update_profile():
                 isinstance(item, str) for item in value
             ):
                 return jsonify({"error": f"{field} must be a list of strings."}), 400
-            setattr(profile, field, list(dict.fromkeys(value)))
+            normalized_items = [item.strip() for item in value if item.strip()]
+            setattr(profile, field, list(dict.fromkeys(normalized_items)))
 
     if "preferred_social_intensity" in payload:
         intensity = payload["preferred_social_intensity"]
-        if intensity not in (1, 2, 3):
+        if isinstance(intensity, bool) or intensity not in (1, 2, 3):
             return jsonify(
                 {"error": "preferred_social_intensity must be 1, 2, or 3."}
             ), 400

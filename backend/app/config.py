@@ -8,6 +8,7 @@ load_dotenv(BACKEND_ROOT / ".env")
 
 
 class Config:
+    BACKEND_PORT = int(os.getenv("BACKEND_PORT", "5001"))
     SECRET_KEY = os.getenv("SECRET_KEY", "onsite-local-development-key")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SESSION_COOKIE_HTTPONLY = True

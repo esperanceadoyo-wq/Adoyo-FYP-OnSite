@@ -1,15 +1,27 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { featuredSpace, spacePath } from "@/lib/space-flow";
 import { requireAuth } from "@/lib/server-auth";
+import { requireSpace } from "@/lib/server-spaces";
+import { catalogSpacePath } from "@/lib/space-flow";
+import { getSpaceDetails, type Space } from "@/lib/spaces";
 
-export const metadata: Metadata = {
-  title: `${featuredSpace.name} | OnSite`,
-};
+type SpaceRouteProps = { params: Promise<{ spaceId: string }> };
 
-export default async function SpaceDetailsPage() {
-  await requireAuth(spacePath());
+export async function generateMetadata({
+  params,
+}: SpaceRouteProps): Promise<Metadata> {
+  const { spaceId } = await params;
+  const result = await getSpaceDetails(spaceId);
+  return {
+    title: result.status === "ok" ? result.space.name : "Space",
+  };
+}
+
+export default async function SpaceDetailsPage({ params }: SpaceRouteProps) {
+  const { spaceId } = await params;
+  await requireAuth(catalogSpacePath(spaceId));
+  const space = await requireSpace(spaceId);
 
   return (
     <main className="min-h-screen bg-[#0F172A] text-on-surface">
@@ -19,18 +31,26 @@ export default async function SpaceDetailsPage() {
           <div className="space-y-10 lg:col-span-3">
             <section className="space-y-8">
               <div className="group relative aspect-[21/9] w-full overflow-hidden rounded-3xl bg-surface-container-high shadow-2xl">
-                <Image
-                  alt={featuredSpace.name}
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 680px"
-                  src={featuredSpace.image}
-                />
+                {space.image_url ? (
+                  <Image
+                    alt={space.image_alt || space.name}
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 680px"
+                    src={space.image_url}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-slate-500">
+                    <span className="material-symbols-outlined text-6xl">
+                      image_not_supported
+                    </span>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute bottom-8 left-8 pr-8">
                   <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white lg:text-6xl">
-                    {featuredSpace.name}
+                    {space.name}
                   </h1>
                 </div>
               </div>
@@ -41,13 +61,13 @@ export default async function SpaceDetailsPage() {
                     <span className="material-symbols-outlined text-primary">
                       location_on
                     </span>
-                    <span>{featuredSpace.address}</span>
+                    <span>{space.address}</span>
                   </div>
                   <div className="flex items-center gap-2 font-bold text-primary">
                     <span className="material-symbols-outlined text-sm">
                       schedule
                     </span>
-                    <span>Open until 10:00 PM</span>
+                    <span>{formatHours(space.opening_hours)}</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
@@ -57,7 +77,7 @@ export default async function SpaceDetailsPage() {
                   </button>
                   <Link
                     className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-bold text-on-primary transition-all hover:opacity-90"
-                    href={spacePath("/location")}
+                    href={catalogSpacePath(space.slug, "/location")}
                   >
                     <span className="material-symbols-outlined">login</span>
                     Visit Space
@@ -73,9 +93,27 @@ export default async function SpaceDetailsPage() {
               </h2>
               <div className="rounded-2xl border border-outline/20 bg-[#1E293B] p-8">
                 <p className="text-lg leading-relaxed text-on-surface-variant">
-                  {featuredSpace.description}
+                  {space.description}
                 </p>
               </div>
+              {space.cultural_notes || space.safety_notes ? (
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  {space.cultural_notes ? (
+                    <GuidanceCard
+                      icon="diversity_3"
+                      label="Cultural guidance"
+                      value={space.cultural_notes}
+                    />
+                  ) : null}
+                  {space.safety_notes ? (
+                    <GuidanceCard
+                      icon="health_and_safety"
+                      label="Safety notes"
+                      value={space.safety_notes}
+                    />
+                  ) : null}
+                </div>
+              ) : null}
             </section>
           </div>
 
@@ -88,31 +126,36 @@ export default async function SpaceDetailsPage() {
                 <PillGroup
                   accent="primary"
                   items={[
-                    { icon: "menu_book", label: "Study" },
-                    { icon: "groups", label: "Collaborative" },
+                    ...space.atmosphere_tags.slice(0, 3).map((tag) => ({
+                      icon: atmosphereIcon(tag),
+                      label: formatLabel(tag),
+                    })),
                   ]}
                   label="Interests & Purpose"
                 />
                 <PillGroup
                   accent="tertiary"
-                  items={[
-                    { icon: "psychology", label: "Focused" },
-                    { icon: "self_improvement", label: "Overwhelmed" },
-                  ]}
+                  items={bestMoodItems(space)}
                   label="Best When You Feel"
                 />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <SpecCard label="Comfort Level" value="Private" />
-                  <SpecCard label="Noise Tolerance" value="Pin Drop Silence" />
+                  <SpecCard
+                    label="Comfort Level"
+                    value={comfortLabel(space.social_intensity)}
+                  />
+                  <SpecCard
+                    label="Noise Tolerance"
+                    value={formatLabel(space.noise_level)}
+                  />
                 </div>
 
                 <PillGroup
                   accent="neutral"
-                  items={[
-                    { icon: "wifi", label: "Strong WiFi" },
-                    { icon: "power", label: "Power Outlets" },
-                  ]}
+                  items={space.amenities.map((amenity) => ({
+                    icon: amenityIcon(amenity),
+                    label: formatLabel(amenity),
+                  }))}
                   label="Amenities"
                 />
               </div>
@@ -131,13 +174,17 @@ export default async function SpaceDetailsPage() {
                         <span className="material-symbols-outlined text-lg text-primary">
                           star
                         </span>
-                        4.8/5
+                        {space.rating !== null ? `${space.rating.toFixed(1)}/5` : "New"}
                       </span>
                     }
                   />
                   <HighlightRow
-                    label="Most Popular Times"
-                    value="2 PM - 5 PM"
+                    label="Space Type"
+                    value={formatLabel(space.category)}
+                  />
+                  <HighlightRow
+                    label="Cost Level"
+                    value={costLabel(space.cost_level)}
                   />
                 </div>
               </div>
@@ -147,6 +194,107 @@ export default async function SpaceDetailsPage() {
       </div>
     </main>
   );
+}
+
+function GuidanceCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <article className="rounded-2xl border border-outline/20 bg-[#1E293B] p-5">
+      <div className="mb-2 flex items-center gap-2 text-sm font-bold text-primary">
+        <span className="material-symbols-outlined text-xl">{icon}</span>
+        {label}
+      </div>
+      <p className="text-sm leading-relaxed text-on-surface-variant">{value}</p>
+    </article>
+  );
+}
+
+function formatHours(openingHours: Record<string, string>) {
+  const hours =
+    openingHours.daily ??
+    openingHours.weekdays ??
+    Object.values(openingHours)[0];
+
+  if (!hours) return "Hours vary";
+
+  return hours.replace(
+    /(\d{2}):(\d{2})-(\d{2}):(\d{2})/,
+    (_match, startHour, startMinute, endHour, endMinute) =>
+      `${formatTime(startHour, startMinute)} - ${formatTime(endHour, endMinute)}`,
+  );
+}
+
+function formatTime(hour: string, minute: string) {
+  const numericHour = Number(hour);
+  const displayHour = numericHour % 12 || 12;
+  return `${displayHour}:${minute} ${numericHour >= 12 ? "PM" : "AM"}`;
+}
+
+function formatLabel(value: string) {
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function comfortLabel(intensity: number) {
+  if (intensity <= 1) return "Private";
+  if (intensity === 2) return "Casual";
+  return "Public";
+}
+
+function costLabel(level: number) {
+  if (level <= 0) return "Free";
+  if (level === 1) return "Low Cost";
+  if (level === 2) return "Moderate";
+  return "Premium";
+}
+
+function atmosphereIcon(tag: string) {
+  const normalizedTag = tag.toLowerCase();
+  if (/study|read|focus|academic/.test(normalizedTag)) return "menu_book";
+  if (/social|community|collaborat/.test(normalizedTag)) return "groups";
+  if (/nature|calm|outdoor/.test(normalizedTag)) return "nature_people";
+  if (/event|creative|culture/.test(normalizedTag)) return "celebration";
+  return "interests";
+}
+
+function amenityIcon(amenity: string) {
+  const normalizedAmenity = amenity.toLowerCase();
+  if (/wi-?fi|internet/.test(normalizedAmenity)) return "wifi";
+  if (/power|outlet|charging/.test(normalizedAmenity)) return "power";
+  if (/parking/.test(normalizedAmenity)) return "local_parking";
+  if (/food|cafe|coffee/.test(normalizedAmenity)) return "local_cafe";
+  if (/air|cool/.test(normalizedAmenity)) return "ac_unit";
+  if (/accessible|wheelchair/.test(normalizedAmenity)) return "accessible";
+  return "check_circle";
+}
+
+function bestMoodItems(space: Space) {
+  if (space.social_intensity <= 1) {
+    return [
+      { icon: "psychology", label: "Focused" },
+      { icon: "self_improvement", label: "Overwhelmed" },
+    ];
+  }
+
+  if (space.social_intensity === 2) {
+    return [
+      { icon: "psychology", label: "Focused" },
+      { icon: "sentiment_satisfied", label: "Social" },
+    ];
+  }
+
+  return [
+    { icon: "sentiment_satisfied", label: "Social" },
+    { icon: "bolt", label: "Energized" },
+  ];
 }
 
 function PillGroup({

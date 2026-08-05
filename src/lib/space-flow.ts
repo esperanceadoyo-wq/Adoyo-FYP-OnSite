@@ -16,5 +16,9 @@ export const featuredSpace = {
 };
 
 export function spacePath(suffix = "") {
-  return `/spaces/${featuredSpace.slug}${suffix}`;
+  return catalogSpacePath(featuredSpace.slug, suffix);
+}
+
+export function catalogSpacePath(slug: string, suffix = "") {
+  return `/spaces/${encodeURIComponent(slug)}${suffix}`;
 }
