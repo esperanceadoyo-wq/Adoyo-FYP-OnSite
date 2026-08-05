@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from flask import Blueprint, current_app, g, jsonify, request
+from sqlalchemy.exc import IntegrityError
 
 from ..auth import login_required
 from ..extensions import db
@@ -127,42 +128,80 @@ def get_visit(visit_id: int):
 @feedback_bp.post("/reflections")
 @login_required
 def create_reflection():
-    payload = request.get_json(silent=True) or {}
-    space = db.session.get(Space, payload.get("space_id"))
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+
+    space_id = payload.get("space_id")
+    visit_id = payload.get("visit_id")
+    if isinstance(space_id, bool) or not isinstance(space_id, int):
+        return jsonify({"error": "A valid space_id is required."}), 400
+    if isinstance(visit_id, bool) or not isinstance(visit_id, int):
+        return jsonify({"error": "A verified visit_id is required."}), 400
+
+    space = db.session.get(Space, space_id)
     if space is None:
         return jsonify({"error": "A valid space_id is required."}), 400
 
-    comfort_rating = payload.get("comfort_rating")
+    visit = db.session.get(Visit, visit_id)
+    if visit is None or visit.user_id != g.current_user.id:
+        return jsonify({"error": "Visit not found."}), 404
+    if visit.space_id != space.id:
+        return jsonify({"error": "Visit does not belong to this space."}), 400
+    if visit.verification_method != "location":
+        return jsonify({"error": "A location-verified visit is required."}), 400
+    if db.session.scalar(
+        db.select(Reflection.id).where(Reflection.visit_id == visit.id)
+    ):
+        return jsonify({"error": "A reflection was already submitted for this visit."}), 409
+
     ratings = [
-        comfort_rating,
+        payload.get("comfort_rating"),
         payload.get("social_rating"),
         payload.get("learning_value_rating"),
     ]
-    if comfort_rating is None or any(
-        rating is not None and (not isinstance(rating, int) or not 1 <= rating <= 5)
+    if any(
+        isinstance(rating, bool)
+        or not isinstance(rating, int)
+        or not 1 <= rating <= 5
         for rating in ratings
     ):
-        return jsonify({"error": "Ratings must be whole numbers from 1 to 5."}), 400
+        return jsonify({"error": "All ratings must be whole numbers from 1 to 5."}), 400
 
-    visit_id = payload.get("visit_id")
-    if visit_id:
-        visit = db.session.get(Visit, visit_id)
-        if visit is None or visit.user_id != g.current_user.id:
-            return jsonify({"error": "Visit not found."}), 404
+    would_return = payload.get("would_return")
+    if not isinstance(would_return, bool):
+        return jsonify({"error": "would_return must be a boolean."}), 400
+
+    reflection_text = payload.get("reflection_text")
+    if reflection_text is not None and not isinstance(reflection_text, str):
+        return jsonify({"error": "reflection_text must be a string or null."}), 400
+    if reflection_text is not None and len(reflection_text.strip()) > 5000:
+        return jsonify({"error": "reflection_text cannot exceed 5000 characters."}), 400
+
+    moods = {}
+    for field in ("mood_before", "mood_after"):
+        value = payload.get(field)
+        if value is not None and (not isinstance(value, str) or len(value.strip()) > 40):
+            return jsonify({"error": f"{field} must be a short string or null."}), 400
+        moods[field] = value.strip() if isinstance(value, str) and value.strip() else None
 
     reflection = Reflection(
         user_id=g.current_user.id,
         space_id=space.id,
-        visit_id=visit_id,
-        comfort_rating=comfort_rating,
-        social_rating=payload.get("social_rating"),
-        learning_value_rating=payload.get("learning_value_rating"),
-        mood_before=payload.get("mood_before"),
-        mood_after=payload.get("mood_after"),
-        reflection_text=payload.get("reflection_text"),
-        would_return=payload.get("would_return"),
+        visit_id=visit.id,
+        comfort_rating=ratings[0],
+        social_rating=ratings[1],
+        learning_value_rating=ratings[2],
+        mood_before=moods["mood_before"],
+        mood_after=moods["mood_after"],
+        reflection_text=(reflection_text.strip() if reflection_text else None),
+        would_return=would_return,
     )
     db.session.add(reflection)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "A reflection was already submitted for this visit."}), 409
     award_eligible_achievements(g.current_user.id)
     return jsonify({"reflection": reflection.to_dict()}), 201

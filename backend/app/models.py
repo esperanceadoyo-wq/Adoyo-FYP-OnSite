@@ -160,6 +160,9 @@ class Visit(db.Model):
 
 class Reflection(db.Model):
     __tablename__ = "reflections"
+    __table_args__ = (
+        db.UniqueConstraint("visit_id", name="uq_reflections_visit_id"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(

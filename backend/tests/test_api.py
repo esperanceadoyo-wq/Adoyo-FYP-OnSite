@@ -1,5 +1,21 @@
 from app.extensions import db
-from app.models import Space, Visit
+from app.models import Reflection, Space, Visit
+
+
+def _create_verified_visit(client, slug="zus-coffee"):
+    space = client.get(f"/api/spaces/{slug}").get_json()["space"]
+    response = client.post(
+        "/api/visits",
+        json={
+            "accuracy_meters": 10,
+            "latitude": space["latitude"],
+            "location_consent": True,
+            "longitude": space["longitude"],
+            "space_id": space["id"],
+        },
+    )
+    assert response.status_code == 201
+    return space, response.get_json()["visit"]
 
 
 def test_health_check(client):
@@ -218,6 +234,7 @@ def test_profile_recommendation_and_progress_flow(authenticated_client):
             "space_id": space_id,
             "visit_id": visit_response.get_json()["visit"]["id"],
             "comfort_rating": 5,
+            "social_rating": 4,
             "learning_value_rating": 4,
             "mood_before": "focused",
             "mood_after": "confident",
@@ -231,6 +248,84 @@ def test_profile_recommendation_and_progress_flow(authenticated_client):
     assert progress["reflections"] == 1
     assert progress["xp"] >= 90
     assert len(progress["achievements"]) == 2
+
+
+def test_reflection_submission_requires_matching_verified_visit(
+    app, authenticated_client
+):
+    space, visit = _create_verified_visit(authenticated_client)
+    other_space = authenticated_client.get(
+        "/api/spaces/cyberjaya-community-library"
+    ).get_json()["space"]
+    valid_payload = {
+        "comfort_rating": 5,
+        "learning_value_rating": 4,
+        "mood_after": "calm",
+        "reflection_text": "Comfortable and productive.",
+        "social_rating": 3,
+        "space_id": space["id"],
+        "visit_id": visit["id"],
+        "would_return": True,
+    }
+
+    missing_visit = authenticated_client.post(
+        "/api/reflections",
+        json={key: value for key, value in valid_payload.items() if key != "visit_id"},
+    )
+    mismatched_space = authenticated_client.post(
+        "/api/reflections",
+        json={**valid_payload, "space_id": other_space["id"]},
+    )
+    incomplete_ratings = authenticated_client.post(
+        "/api/reflections",
+        json={
+            **valid_payload,
+            "learning_value_rating": None,
+        },
+    )
+    response = authenticated_client.post("/api/reflections", json=valid_payload)
+    duplicate = authenticated_client.post("/api/reflections", json=valid_payload)
+
+    assert missing_visit.status_code == 400
+    assert missing_visit.get_json()["error"] == "A verified visit_id is required."
+    assert mismatched_space.status_code == 400
+    assert mismatched_space.get_json()["error"] == "Visit does not belong to this space."
+    assert incomplete_ratings.status_code == 400
+    assert incomplete_ratings.get_json()["error"] == (
+        "All ratings must be whole numbers from 1 to 5."
+    )
+    assert response.status_code == 201
+    assert response.get_json()["reflection"]["visit_id"] == visit["id"]
+    assert duplicate.status_code == 409
+    assert duplicate.get_json()["error"] == (
+        "A reflection was already submitted for this visit."
+    )
+    with app.app_context():
+        assert db.session.scalar(
+            db.select(db.func.count()).select_from(Reflection)
+        ) == 1
+
+
+def test_reflection_rejects_invalid_fields(authenticated_client):
+    space, visit = _create_verified_visit(authenticated_client)
+    base_payload = {
+        "comfort_rating": 4,
+        "learning_value_rating": 4,
+        "social_rating": 4,
+        "space_id": space["id"],
+        "visit_id": visit["id"],
+        "would_return": True,
+    }
+    cases = [
+        ({**base_payload, "comfort_rating": True}, "All ratings must be whole numbers from 1 to 5."),
+        ({key: value for key, value in base_payload.items() if key != "would_return"}, "would_return must be a boolean."),
+        ({**base_payload, "reflection_text": "x" * 5001}, "reflection_text cannot exceed 5000 characters."),
+    ]
+
+    for payload, error in cases:
+        response = authenticated_client.post("/api/reflections", json=payload)
+        assert response.status_code == 400
+        assert response.get_json()["error"] == error
 
 
 def test_location_check_in_creates_verified_visit_without_coordinates(

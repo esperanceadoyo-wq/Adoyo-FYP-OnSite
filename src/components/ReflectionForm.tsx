@@ -1,182 +1,299 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
-const noiseOptions = ["Quiet", "Moderate", "Lively", "Very Active"];
-const vibeOptions = ["Deep Focus", "Collaborative", "Casual", "Socializing"];
-const tagOptions = [
-  "Quiet",
-  "Good for studying",
-  "Good for meeting people",
-  "Too noisy",
-  "Comfortable environment",
+const moodOptions = [
+  { label: "Calm", value: "calm" },
+  { label: "Focused", value: "focused" },
+  { label: "Energized", value: "energized" },
+  { label: "Connected", value: "connected" },
+  { label: "Tired", value: "tired" },
 ];
 
-const tagQuestions: Record<string, string> = {
-  "Good for studying": "What specific aspect helped your focus today?",
-  "Good for meeting people": "Did you make any meaningful connections?",
-  "Too noisy": "At what time did the noise become distracting?",
-  "Comfortable environment":
-    "What was your favorite comfort feature (e.g., seating, lighting, temp)?",
+type ReflectionResponse = {
+  error?: string;
+  reflection?: { id: number };
 };
 
-export function ReflectionForm({ spaceName }: { spaceName: string }) {
-  const router = useRouter();
-  const [noise, setNoise] = useState("");
-  const [vibe, setVibe] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const activePrompt =
-    tags.length === 0
-      ? ""
-      : tagQuestions[tags[tags.length - 1]] || "Tell us more about your visit...";
+export function ReflectionForm({
+  moodBefore,
+  spaceId,
+  spaceName,
+  visitId,
+}: {
+  moodBefore: string | null;
+  spaceId: number;
+  spaceName: string;
+  visitId: number;
+}) {
+  const [comfortRating, setComfortRating] = useState<number | null>(null);
+  const [socialRating, setSocialRating] = useState<number | null>(null);
+  const [learningRating, setLearningRating] = useState<number | null>(null);
+  const [moodAfter, setMoodAfter] = useState("");
+  const [reflectionText, setReflectionText] = useState("");
+  const [wouldReturn, setWouldReturn] = useState<boolean | null>(null);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reflectionId, setReflectionId] = useState<number | null>(null);
 
-  function toggleTag(tag: string) {
-    setTags((current) =>
-      current.includes(tag)
-        ? current.filter((item) => item !== tag)
-        : [...current, tag],
+  async function submitReflection(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    if (
+      comfortRating === null ||
+      socialRating === null ||
+      learningRating === null ||
+      wouldReturn === null
+    ) {
+      setError("Complete all three ratings and choose whether you would return.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/reflections", {
+        body: JSON.stringify({
+          comfort_rating: comfortRating,
+          learning_value_rating: learningRating,
+          mood_after: moodAfter || null,
+          mood_before: moodBefore,
+          reflection_text: reflectionText.trim() || null,
+          social_rating: socialRating,
+          space_id: spaceId,
+          visit_id: visitId,
+          would_return: wouldReturn,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      const data = (await response.json()) as ReflectionResponse;
+
+      if (!response.ok || !data.reflection) {
+        setError(data.error || "Your reflection could not be submitted.");
+        return;
+      }
+
+      setReflectionId(data.reflection.id);
+    } catch {
+      setError("The reflection service is temporarily unavailable.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (reflectionId !== null) {
+    return (
+      <section className="flex min-h-96 flex-col items-center justify-center text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+          <CheckIcon className="h-8 w-8" />
+        </div>
+        <h1 className="mt-6 text-3xl font-bold text-white">
+          Reflection submitted
+        </h1>
+        <p className="mt-3 max-w-md leading-relaxed text-[#94A3B8]">
+          Your reflection for {spaceName} has been recorded and your progress has
+          been updated.
+        </p>
+        <p className="mt-2 text-xs font-bold uppercase tracking-wider text-primary">
+          Reflection #{reflectionId}
+        </p>
+        <div className="mt-8 flex w-full max-w-sm gap-3">
+          <Link
+            className="flex h-12 flex-1 items-center justify-center rounded-xl border border-[#334155] font-bold text-white"
+            href="/dashboard"
+          >
+            Dashboard
+          </Link>
+          <Link
+            className="flex h-12 flex-1 items-center justify-center rounded-xl bg-primary font-bold text-[#0B1120]"
+            href="/profile"
+          >
+            View Progress
+          </Link>
+        </div>
+      </section>
     );
   }
 
   return (
-    <form
-      className="flex-1"
-      onSubmit={(event) => {
-        event.preventDefault();
-        router.push("/profile");
-      }}
-    >
+    <form className="flex-1" onSubmit={submitReflection}>
       <div className="grid gap-10 lg:grid-cols-2">
         <div className="space-y-8">
           <div>
-            <h1 className="pb-1 text-3xl font-bold leading-tight tracking-tight text-white">
+            <h1 className="pb-1 text-3xl font-bold leading-tight text-white">
               Post-Visit Reflection
             </h1>
-            <p className="text-base font-normal leading-normal text-[#94A3B8]">
+            <p className="text-base text-[#94A3B8]">
               Tell us about your experience at {spaceName}.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
-              Your Thoughts
-            </p>
-            <textarea
-              className="min-h-[140px] w-full resize-none rounded-xl border border-[#1E293B] bg-[#0B1120] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
-              placeholder="What did you like or dislike about this space?"
-            />
-          </div>
+          <RatingControl
+            label="Comfort Level"
+            onChange={setComfortRating}
+            selected={comfortRating}
+          />
+          <RatingControl
+            label="Social Experience"
+            onChange={setSocialRating}
+            selected={socialRating}
+          />
+          <RatingControl
+            label="Learning Value"
+            onChange={setLearningRating}
+            selected={learningRating}
+          />
+        </div>
 
-          {activePrompt ? (
-            <div className="space-y-3 transition-all duration-300">
-              <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
-                {activePrompt}
-              </p>
-              <textarea
-                className="min-h-[100px] w-full resize-none rounded-xl border border-[#1E293B] bg-[#0B1120] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
-                placeholder="Type your answer here..."
+        <div className="space-y-6">
+          <label className="block space-y-3">
+            <span className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+              How do you feel now?
+            </span>
+            <select
+              className="h-12 w-full rounded-xl border border-[#334155] bg-[#161E2E] px-4 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary"
+              onChange={(event) => setMoodAfter(event.target.value)}
+              value={moodAfter}
+            >
+              <option value="">Select a mood</option>
+              {moodOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block space-y-3">
+            <span className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+              Your Thoughts
+            </span>
+            <textarea
+              className="min-h-36 w-full resize-none rounded-xl border border-[#334155] bg-[#161E2E] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
+              maxLength={5000}
+              onChange={(event) => setReflectionText(event.target.value)}
+              placeholder="What helped, what felt difficult, or what would you change?"
+              value={reflectionText}
+            />
+          </label>
+
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+              Would you return?
+            </legend>
+            <div className="grid grid-cols-2 gap-3">
+              <ChoiceButton
+                active={wouldReturn === true}
+                label="Yes"
+                onClick={() => setWouldReturn(true)}
+              />
+              <ChoiceButton
+                active={wouldReturn === false}
+                label="No"
+                onClick={() => setWouldReturn(false)}
               />
             </div>
-          ) : null}
-        </div>
-
-        <div className="space-y-8">
-          <SelectionGroup
-            label="Comfort Level"
-            onSelect={setNoise}
-            options={noiseOptions}
-            selected={noise}
-          />
-          <SelectionGroup
-            label="Social Interaction"
-            onSelect={setVibe}
-            options={vibeOptions}
-            selected={vibe}
-          />
-
-          <div className="space-y-4 rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
-              Quick Tags
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {tagOptions.map((tag) => (
-                <PillButton
-                  active={tags.includes(tag)}
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                >
-                  {tag}
-                </PillButton>
-              ))}
-            </div>
-          </div>
+          </fieldset>
         </div>
       </div>
 
-      <div className="mt-12">
-        <button
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#22D3EE] py-5 font-bold text-[#0B1120] shadow-lg transition-all hover:brightness-110 active:scale-[0.99]"
-          type="submit"
-        >
-          Submit Feedback
-        </button>
-      </div>
+      {error ? (
+        <p aria-live="polite" className="mt-6 text-center text-sm font-medium text-error">
+          {error}
+        </p>
+      ) : null}
+
+      <button
+        className="mt-8 flex w-full items-center justify-center rounded-xl bg-primary py-4 font-bold text-[#0B1120] shadow-lg transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+        disabled={isSubmitting}
+        type="submit"
+      >
+        {isSubmitting ? "Submitting reflection..." : "Submit Reflection"}
+      </button>
     </form>
   );
 }
 
-function SelectionGroup({
+function RatingControl({
   label,
-  onSelect,
-  options,
+  onChange,
   selected,
 }: {
   label: string;
-  onSelect: (value: string) => void;
-  options: string[];
-  selected: string;
+  onChange: (value: number) => void;
+  selected: number | null;
 }) {
   return (
-    <div className="space-y-4 rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
-      <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+    <fieldset className="rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
+      <legend className="px-1 text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
         {label}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <PillButton
-            active={selected === option}
-            key={option}
-            onClick={() => onSelect(selected === option ? "" : option)}
+      </legend>
+      <div className="mt-3 grid grid-cols-5 gap-2">
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            aria-label={`${label}: ${value} out of 5`}
+            aria-pressed={selected === value}
+            className={`h-10 rounded-lg border text-sm font-bold transition-colors ${
+              selected === value
+                ? "border-primary bg-primary text-[#0B1120]"
+                : "border-[#334155] bg-[#0B1120] text-white hover:border-primary"
+            }`}
+            key={value}
+            onClick={() => onChange(value)}
+            type="button"
           >
-            {option}
-          </PillButton>
+            {value}
+          </button>
         ))}
       </div>
-    </div>
+      <div className="mt-2 flex justify-between text-[10px] font-medium text-slate-500">
+        <span>Low</span>
+        <span>High</span>
+      </div>
+    </fieldset>
   );
 }
 
-function PillButton({
+function ChoiceButton({
   active,
-  children,
+  label,
   onClick,
 }: {
   active: boolean;
-  children: React.ReactNode;
+  label: string;
   onClick: () => void;
 }) {
   return (
     <button
-      className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${
+      aria-pressed={active}
+      className={`h-11 rounded-xl border text-sm font-bold transition-colors ${
         active
-          ? "border-[#22D3EE] bg-[#22D3EE] text-[#0B1120] shadow-[0_0_12px_rgba(34,211,238,0.3)]"
-          : "border-transparent bg-[#1E293B] text-white hover:bg-[#334155]"
+          ? "border-primary bg-primary text-[#0B1120]"
+          : "border-[#334155] bg-[#161E2E] text-white hover:border-primary"
       }`}
       onClick={onClick}
       type="button"
     >
-      {children}
+      {label}
     </button>
+  );
+}
+
+function CheckIcon({ className }: { className: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2.5"
+      viewBox="0 0 24 24"
+    >
+      <path d="m5 12 4 4L19 6" />
+    </svg>
   );
 }
