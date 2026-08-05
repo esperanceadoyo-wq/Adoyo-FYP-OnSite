@@ -44,9 +44,10 @@ Before changing framework conventions, read the relevant local Next.js 16 docume
 1. **No CDN Tailwind:** Do not use `<script src="https://cdn.tailwindcss.com">`. Tailwind must compile through the local Next/Tailwind setup.
 2. **No Standalone Document Markup:** Do not paste full `<!DOCTYPE html>`, `<html>`, `<head>`, or `<body>` documents into React pages. Convert the body into components and move metadata/configuration to Next conventions.
 3. **Preserve Stitch Layouts Carefully:** When implementing Google Stitch output, translate the design into React components and data arrays while preserving the visual structure, spacing, color tokens, and responsive grid behavior.
-4. **Avoid Global Token Collisions:** Do not redefine Tailwind theme variables such as `--color-background`, `--color-on-surface`, or `--color-outline` outside the `@theme` block. Page-specific CSS variables need page-specific names.
-5. **Use Existing Tokens:** Prefer the existing semantic classes such as `bg-background`, `text-on-surface`, `bg-surface-container-low`, `border-outline-variant`, `text-primary`, and `text-tertiary`.
-6. **Responsive Layout:** Keep dashboard-like app surfaces dense and operational. Avoid marketing-style hero layouts inside authenticated/product dashboards.
+4. **No Unrequested Design Changes:** Backend integration must preserve the existing DOM structure, visible copy, controls, classes, spacing, colors, responsive behavior, animations, and interaction presentation. Add data wiring and state behavior behind the current UI. Any visual or layout change requires an explicit user request.
+5. **Avoid Global Token Collisions:** Do not redefine Tailwind theme variables such as `--color-background`, `--color-on-surface`, or `--color-outline` outside the `@theme` block. Page-specific CSS variables need page-specific names.
+6. **Use Existing Tokens:** Prefer the existing semantic classes such as `bg-background`, `text-on-surface`, `bg-surface-container-low`, `border-outline-variant`, `text-primary`, and `text-tertiary`.
+7. **Responsive Layout:** Keep dashboard-like app surfaces dense and operational. Avoid marketing-style hero layouts inside authenticated/product dashboards.
 
 ---
 

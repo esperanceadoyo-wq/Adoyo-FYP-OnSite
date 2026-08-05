@@ -169,8 +169,8 @@ def create_reflection():
         return jsonify({"error": "All ratings must be whole numbers from 1 to 5."}), 400
 
     would_return = payload.get("would_return")
-    if not isinstance(would_return, bool):
-        return jsonify({"error": "would_return must be a boolean."}), 400
+    if would_return is not None and not isinstance(would_return, bool):
+        return jsonify({"error": "would_return must be a boolean or null."}), 400
 
     reflection_text = payload.get("reflection_text")
     if reflection_text is not None and not isinstance(reflection_text, str):

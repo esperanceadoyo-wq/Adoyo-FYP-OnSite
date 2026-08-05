@@ -318,7 +318,7 @@ def test_reflection_rejects_invalid_fields(authenticated_client):
     }
     cases = [
         ({**base_payload, "comfort_rating": True}, "All ratings must be whole numbers from 1 to 5."),
-        ({key: value for key, value in base_payload.items() if key != "would_return"}, "would_return must be a boolean."),
+        ({**base_payload, "would_return": "yes"}, "would_return must be a boolean or null."),
         ({**base_payload, "reflection_text": "x" * 5001}, "reflection_text cannot exceed 5000 characters."),
     ]
 

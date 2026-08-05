@@ -1,53 +1,73 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-const moodOptions = [
-  { label: "Calm", value: "calm" },
-  { label: "Focused", value: "focused" },
-  { label: "Energized", value: "energized" },
-  { label: "Connected", value: "connected" },
-  { label: "Tired", value: "tired" },
+const noiseOptions = ["Quiet", "Moderate", "Lively", "Very Active"];
+const vibeOptions = ["Deep Focus", "Collaborative", "Casual", "Socializing"];
+const tagOptions = [
+  "Quiet",
+  "Good for studying",
+  "Good for meeting people",
+  "Too noisy",
+  "Comfortable environment",
 ];
 
-type ReflectionResponse = {
-  error?: string;
-  reflection?: { id: number };
+const tagQuestions: Record<string, string> = {
+  "Good for studying": "What specific aspect helped your focus today?",
+  "Good for meeting people": "Did you make any meaningful connections?",
+  "Too noisy": "At what time did the noise become distracting?",
+  "Comfortable environment":
+    "What was your favorite comfort feature (e.g., seating, lighting, temp)?",
+};
+
+const comfortRatings: Record<string, number> = {
+  Quiet: 5,
+  Moderate: 4,
+  Lively: 3,
+  "Very Active": 2,
+};
+
+const socialRatings: Record<string, number> = {
+  "Deep Focus": 2,
+  Collaborative: 4,
+  Casual: 3,
+  Socializing: 5,
 };
 
 export function ReflectionForm({
   moodBefore,
   spaceId,
-  spaceName,
   visitId,
 }: {
   moodBefore: string | null;
   spaceId: number;
-  spaceName: string;
   visitId: number;
 }) {
-  const [comfortRating, setComfortRating] = useState<number | null>(null);
-  const [socialRating, setSocialRating] = useState<number | null>(null);
-  const [learningRating, setLearningRating] = useState<number | null>(null);
-  const [moodAfter, setMoodAfter] = useState("");
-  const [reflectionText, setReflectionText] = useState("");
-  const [wouldReturn, setWouldReturn] = useState<boolean | null>(null);
-  const [error, setError] = useState("");
+  const router = useRouter();
+  const [noise, setNoise] = useState("");
+  const [vibe, setVibe] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [thoughts, setThoughts] = useState("");
+  const [followUp, setFollowUp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reflectionId, setReflectionId] = useState<number | null>(null);
+  const activePrompt =
+    tags.length === 0
+      ? ""
+      : tagQuestions[tags[tags.length - 1]] || "Tell us more about your visit...";
+
+  function toggleTag(tag: string) {
+    setTags((current) =>
+      current.includes(tag)
+        ? current.filter((item) => item !== tag)
+        : [...current, tag],
+    );
+  }
 
   async function submitReflection(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
-
-    if (
-      comfortRating === null ||
-      socialRating === null ||
-      learningRating === null ||
-      wouldReturn === null
-    ) {
-      setError("Complete all three ratings and choose whether you would return.");
+    if (!noise || !vibe) {
+      window.alert("Please select a comfort level and social interaction.");
       return;
     }
 
@@ -55,66 +75,32 @@ export function ReflectionForm({
     try {
       const response = await fetch("/api/reflections", {
         body: JSON.stringify({
-          comfort_rating: comfortRating,
-          learning_value_rating: learningRating,
-          mood_after: moodAfter || null,
+          comfort_rating: comfortRatings[noise],
+          learning_value_rating: learningRating(tags),
+          mood_after: null,
           mood_before: moodBefore,
-          reflection_text: reflectionText.trim() || null,
-          social_rating: socialRating,
+          reflection_text: buildReflectionText(thoughts, tags, activePrompt, followUp),
+          social_rating: socialRatings[vibe],
           space_id: spaceId,
           visit_id: visitId,
-          would_return: wouldReturn,
+          would_return: null,
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
       });
-      const data = (await response.json()) as ReflectionResponse;
+      const data = (await response.json()) as { error?: string };
 
-      if (!response.ok || !data.reflection) {
-        setError(data.error || "Your reflection could not be submitted.");
+      if (!response.ok) {
+        window.alert(data.error || "Your reflection could not be submitted.");
         return;
       }
 
-      setReflectionId(data.reflection.id);
+      router.push("/profile");
     } catch {
-      setError("The reflection service is temporarily unavailable.");
+      window.alert("The reflection service is temporarily unavailable.");
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (reflectionId !== null) {
-    return (
-      <section className="flex min-h-96 flex-col items-center justify-center text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-          <CheckIcon className="h-8 w-8" />
-        </div>
-        <h1 className="mt-6 text-3xl font-bold text-white">
-          Reflection submitted
-        </h1>
-        <p className="mt-3 max-w-md leading-relaxed text-[#94A3B8]">
-          Your reflection for {spaceName} has been recorded and your progress has
-          been updated.
-        </p>
-        <p className="mt-2 text-xs font-bold uppercase tracking-wider text-primary">
-          Reflection #{reflectionId}
-        </p>
-        <div className="mt-8 flex w-full max-w-sm gap-3">
-          <Link
-            className="flex h-12 flex-1 items-center justify-center rounded-xl border border-[#334155] font-bold text-white"
-            href="/dashboard"
-          >
-            Dashboard
-          </Link>
-          <Link
-            className="flex h-12 flex-1 items-center justify-center rounded-xl bg-primary font-bold text-[#0B1120]"
-            href="/profile"
-          >
-            View Progress
-          </Link>
-        </div>
-      </section>
-    );
   }
 
   return (
@@ -122,178 +108,161 @@ export function ReflectionForm({
       <div className="grid gap-10 lg:grid-cols-2">
         <div className="space-y-8">
           <div>
-            <h1 className="pb-1 text-3xl font-bold leading-tight text-white">
+            <h1 className="pb-1 text-3xl font-bold leading-tight tracking-tight text-white">
               Post-Visit Reflection
             </h1>
-            <p className="text-base text-[#94A3B8]">
-              Tell us about your experience at {spaceName}.
+            <p className="text-base font-normal leading-normal text-[#94A3B8]">
+              Tell us about your experience in this space.
             </p>
           </div>
 
-          <RatingControl
-            label="Comfort Level"
-            onChange={setComfortRating}
-            selected={comfortRating}
-          />
-          <RatingControl
-            label="Social Experience"
-            onChange={setSocialRating}
-            selected={socialRating}
-          />
-          <RatingControl
-            label="Learning Value"
-            onChange={setLearningRating}
-            selected={learningRating}
-          />
-        </div>
-
-        <div className="space-y-6">
-          <label className="block space-y-3">
-            <span className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
-              How do you feel now?
-            </span>
-            <select
-              className="h-12 w-full rounded-xl border border-[#334155] bg-[#161E2E] px-4 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary"
-              onChange={(event) => setMoodAfter(event.target.value)}
-              value={moodAfter}
-            >
-              <option value="">Select a mood</option>
-              {moodOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block space-y-3">
-            <span className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
               Your Thoughts
-            </span>
+            </p>
             <textarea
-              className="min-h-36 w-full resize-none rounded-xl border border-[#334155] bg-[#161E2E] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
+              className="min-h-[140px] w-full resize-none rounded-xl border border-[#1E293B] bg-[#0B1120] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
               maxLength={5000}
-              onChange={(event) => setReflectionText(event.target.value)}
-              placeholder="What helped, what felt difficult, or what would you change?"
-              value={reflectionText}
+              onChange={(event) => setThoughts(event.target.value)}
+              placeholder="What did you like or dislike about this space?"
+              value={thoughts}
             />
-          </label>
+          </div>
 
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
-              Would you return?
-            </legend>
-            <div className="grid grid-cols-2 gap-3">
-              <ChoiceButton
-                active={wouldReturn === true}
-                label="Yes"
-                onClick={() => setWouldReturn(true)}
-              />
-              <ChoiceButton
-                active={wouldReturn === false}
-                label="No"
-                onClick={() => setWouldReturn(false)}
+          {activePrompt ? (
+            <div className="space-y-3 transition-all duration-300">
+              <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+                {activePrompt}
+              </p>
+              <textarea
+                className="min-h-[100px] w-full resize-none rounded-xl border border-[#1E293B] bg-[#0B1120] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
+                onChange={(event) => setFollowUp(event.target.value)}
+                placeholder="Type your answer here..."
+                value={followUp}
               />
             </div>
-          </fieldset>
+          ) : null}
+        </div>
+
+        <div className="space-y-8">
+          <SelectionGroup
+            label="Comfort Level"
+            onSelect={setNoise}
+            options={noiseOptions}
+            selected={noise}
+          />
+          <SelectionGroup
+            label="Social Interaction"
+            onSelect={setVibe}
+            options={vibeOptions}
+            selected={vibe}
+          />
+
+          <div className="space-y-4 rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
+            <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+              Quick Tags
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {tagOptions.map((tag) => (
+                <PillButton
+                  active={tags.includes(tag)}
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                >
+                  {tag}
+                </PillButton>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {error ? (
-        <p aria-live="polite" className="mt-6 text-center text-sm font-medium text-error">
-          {error}
-        </p>
-      ) : null}
-
-      <button
-        className="mt-8 flex w-full items-center justify-center rounded-xl bg-primary py-4 font-bold text-[#0B1120] shadow-lg transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
-        disabled={isSubmitting}
-        type="submit"
-      >
-        {isSubmitting ? "Submitting reflection..." : "Submit Reflection"}
-      </button>
+      <div className="mt-12">
+        <button
+          aria-busy={isSubmitting}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#22D3EE] py-5 font-bold text-[#0B1120] shadow-lg transition-all hover:brightness-110 active:scale-[0.99]"
+          disabled={isSubmitting}
+          type="submit"
+        >
+          Submit Feedback
+        </button>
+      </div>
     </form>
   );
 }
 
-function RatingControl({
+function SelectionGroup({
   label,
-  onChange,
+  onSelect,
+  options,
   selected,
 }: {
   label: string;
-  onChange: (value: number) => void;
-  selected: number | null;
+  onSelect: (value: string) => void;
+  options: string[];
+  selected: string;
 }) {
   return (
-    <fieldset className="rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
-      <legend className="px-1 text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
+    <div className="space-y-4 rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
+      <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
         {label}
-      </legend>
-      <div className="mt-3 grid grid-cols-5 gap-2">
-        {[1, 2, 3, 4, 5].map((value) => (
-          <button
-            aria-label={`${label}: ${value} out of 5`}
-            aria-pressed={selected === value}
-            className={`h-10 rounded-lg border text-sm font-bold transition-colors ${
-              selected === value
-                ? "border-primary bg-primary text-[#0B1120]"
-                : "border-[#334155] bg-[#0B1120] text-white hover:border-primary"
-            }`}
-            key={value}
-            onClick={() => onChange(value)}
-            type="button"
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => (
+          <PillButton
+            active={selected === option}
+            key={option}
+            onClick={() => onSelect(selected === option ? "" : option)}
           >
-            {value}
-          </button>
+            {option}
+          </PillButton>
         ))}
       </div>
-      <div className="mt-2 flex justify-between text-[10px] font-medium text-slate-500">
-        <span>Low</span>
-        <span>High</span>
-      </div>
-    </fieldset>
+    </div>
   );
 }
 
-function ChoiceButton({
+function PillButton({
   active,
-  label,
+  children,
   onClick,
 }: {
   active: boolean;
-  label: string;
+  children: React.ReactNode;
   onClick: () => void;
 }) {
   return (
     <button
-      aria-pressed={active}
-      className={`h-11 rounded-xl border text-sm font-bold transition-colors ${
+      className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${
         active
-          ? "border-primary bg-primary text-[#0B1120]"
-          : "border-[#334155] bg-[#161E2E] text-white hover:border-primary"
+          ? "border-[#22D3EE] bg-[#22D3EE] text-[#0B1120] shadow-[0_0_12px_rgba(34,211,238,0.3)]"
+          : "border-transparent bg-[#1E293B] text-white hover:bg-[#334155]"
       }`}
       onClick={onClick}
       type="button"
     >
-      {label}
+      {children}
     </button>
   );
 }
 
-function CheckIcon({ className }: { className: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2.5"
-      viewBox="0 0 24 24"
-    >
-      <path d="m5 12 4 4L19 6" />
-    </svg>
-  );
+function learningRating(tags: string[]) {
+  if (tags.includes("Good for studying")) return 5;
+  if (tags.includes("Too noisy")) return 2;
+  if (tags.includes("Comfortable environment")) return 4;
+  return 3;
+}
+
+function buildReflectionText(
+  thoughts: string,
+  tags: string[],
+  activePrompt: string,
+  followUp: string,
+) {
+  const sections = [thoughts.trim()];
+  if (tags.length) sections.push(`Tags: ${tags.join(", ")}`);
+  if (activePrompt && followUp.trim()) {
+    sections.push(`${activePrompt}\n${followUp.trim()}`);
+  }
+  return sections.filter(Boolean).join("\n\n") || null;
 }
