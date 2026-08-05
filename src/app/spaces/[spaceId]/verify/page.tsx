@@ -4,8 +4,12 @@ import { catalogSpacePath } from "@/lib/space-flow";
 import { requireAuth } from "@/lib/server-auth";
 import { requireSpace } from "@/lib/server-spaces";
 import { getSpaceDetails } from "@/lib/spaces";
+import { getVisit } from "@/lib/visits";
 
-type SpaceRouteProps = { params: Promise<{ spaceId: string }> };
+type SpaceRouteProps = {
+  params: Promise<{ spaceId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export async function generateMetadata({
   params,
@@ -20,10 +24,29 @@ export async function generateMetadata({
   };
 }
 
-export default async function VisitVerificationPage({ params }: SpaceRouteProps) {
+export default async function VisitVerificationPage({
+  params,
+  searchParams,
+}: SpaceRouteProps) {
   const { spaceId } = await params;
   await requireAuth(catalogSpacePath(spaceId, "/verify"));
   const space = await requireSpace(spaceId);
+  const query = await searchParams;
+  const visitId = parsePositiveInteger(firstValue(query.visitId));
+  const visit = visitId ? await getVisit(visitId) : null;
+
+  if (
+    !visit ||
+    visit.space_id !== space.id ||
+    visit.verification_method !== "location"
+  ) {
+    return <CheckInRequired spaceName={space.name} spaceSlug={space.slug} />;
+  }
+
+  const distance = parseMetric(firstValue(query.distance));
+  const accuracy = parseMetric(firstValue(query.accuracy));
+  const allowedDistance = parseMetric(firstValue(query.allowed));
+  const reflectionQuery = new URLSearchParams({ visitId: String(visit.id) });
 
   return (
     <main className="flex min-h-[max(884px,100dvh)] flex-col overflow-hidden bg-[#0F172A] text-white antialiased">
@@ -62,32 +85,37 @@ export default async function VisitVerificationPage({ params }: SpaceRouteProps)
             Reflection unlocked.
           </h1>
           <p className="px-8 text-sm font-medium leading-relaxed text-slate-400 opacity-80">
-            You must be within 5 meters of {space.name} to check in.
+            Your location was verified against {space.name}. Precise coordinates
+            were not stored.
           </p>
         </section>
 
         <section className="mt-8 flex w-full flex-col gap-3">
           <SensorCard
             icon="near_me"
-            label="Current Distance"
-            value="3 meters away"
+            label="Verified Distance"
+            value={distance === null ? "Within check-in range" : formatMeters(distance)}
           />
           <SensorCard
             icon="track_changes"
-            label="Estimated Accuracy"
-            value="5 meters"
+            label="Location Accuracy"
+            value={accuracy === null ? "Accepted" : `Within ${formatMeters(accuracy)}`}
           />
           <SensorCard
             icon="signal_cellular_4_bar"
-            label="GPS Signal Strength"
-            value="Excellent"
+            label="Verification Range"
+            value={
+              allowedDistance === null
+                ? "Passed"
+                : `${formatMeters(allowedDistance)} maximum`
+            }
           />
         </section>
 
         <section className="w-full pt-5">
           <Link
             className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-5 text-lg font-bold text-[#0F172A] shadow-[0_0_20px_rgba(42,184,203,0.3)] transition-all active:scale-95"
-            href={catalogSpacePath(space.slug, "/reflection")}
+            href={`${catalogSpacePath(space.slug, "/reflection")}?${reflectionQuery.toString()}`}
           >
             View Reflection
             <span className="material-symbols-outlined font-bold">
@@ -95,12 +123,62 @@ export default async function VisitVerificationPage({ params }: SpaceRouteProps)
             </span>
           </Link>
           <p className="mt-6 px-10 text-center text-xs font-medium leading-relaxed text-slate-500">
-            Verify location to record your visit and unlock reflection.
+            Visit #{visit.id} was recorded using one-time location verification.
           </p>
         </section>
       </div>
     </main>
   );
+}
+
+function CheckInRequired({
+  spaceName,
+  spaceSlug,
+}: {
+  spaceName: string;
+  spaceSlug: string;
+}) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#0F172A] px-6 text-white">
+      <section className="w-full max-w-md text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-800 text-primary">
+          <span className="material-symbols-outlined text-4xl">location_off</span>
+        </div>
+        <h1 className="mt-6 text-3xl font-extrabold">Check-in required</h1>
+        <p className="mt-3 leading-relaxed text-slate-400">
+          Complete location verification at {spaceName} before opening the visit
+          confirmation.
+        </p>
+        <Link
+          className="mt-8 flex h-12 w-full items-center justify-center rounded-xl bg-primary font-bold text-[#0F172A]"
+          href={catalogSpacePath(spaceSlug, "/location")}
+        >
+          Verify Your Location
+        </Link>
+      </section>
+    </main>
+  );
+}
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parsePositiveInteger(value: string | undefined) {
+  if (!value || !/^\d+$/.test(value)) return null;
+  const number = Number(value);
+  return Number.isSafeInteger(number) && number > 0 ? number : null;
+}
+
+function parseMetric(value: string | undefined) {
+  if (!value) return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function formatMeters(value: number) {
+  if (value < 1000) return `${Math.round(value)} meters`;
+  return `${(value / 1000).toFixed(1)} km`;
 }
 
 function SensorCard({

@@ -15,6 +15,15 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     JSON_SORT_KEYS = False
     FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
+    VISIT_VERIFICATION_RADIUS_METERS = float(
+        os.getenv("VISIT_VERIFICATION_RADIUS_METERS", "150")
+    )
+    MAX_VISIT_ACCURACY_METERS = float(
+        os.getenv("MAX_VISIT_ACCURACY_METERS", "250")
+    )
+    VISIT_DUPLICATE_WINDOW_HOURS = int(
+        os.getenv("VISIT_DUPLICATE_WINDOW_HOURS", "6")
+    )
 
     @staticmethod
     def database_uri(instance_path: str) -> str:

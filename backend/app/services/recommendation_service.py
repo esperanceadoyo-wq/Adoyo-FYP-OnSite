@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from math import asin, cos, radians, sin, sqrt
 
 from ..models import Space, UserProfile
+from .location_service import distance_meters
 
 
 @dataclass
@@ -10,24 +10,6 @@ class RankedSpace:
     score: float
     reason: str
     distance_km: float | None = None
-
-
-def _distance_km(
-    origin_latitude: float,
-    origin_longitude: float,
-    target_latitude: float,
-    target_longitude: float,
-) -> float:
-    earth_radius_km = 6371
-    latitude_delta = radians(target_latitude - origin_latitude)
-    longitude_delta = radians(target_longitude - origin_longitude)
-    value = (
-        sin(latitude_delta / 2) ** 2
-        + cos(radians(origin_latitude))
-        * cos(radians(target_latitude))
-        * sin(longitude_delta / 2) ** 2
-    )
-    return 2 * earth_radius_km * asin(sqrt(value))
 
 
 def rank_spaces(
@@ -99,9 +81,9 @@ def rank_spaces(
             and space.latitude is not None
             and space.longitude is not None
         ):
-            distance_km = _distance_km(
+            distance_km = distance_meters(
                 float(latitude), float(longitude), space.latitude, space.longitude
-            )
+            ) / 1000
             score += max(0, 10 - distance_km * 2)
             if distance_km <= 2:
                 reasons.append("it is nearby")

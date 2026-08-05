@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CheckInButton } from "@/components/CheckInButton";
 import { catalogSpacePath } from "@/lib/space-flow";
 import { requireAuth } from "@/lib/server-auth";
 import { requireSpace } from "@/lib/server-spaces";
@@ -67,20 +68,14 @@ export default async function LocationAccessPage({ params }: SpaceRouteProps) {
           <p className="text-sm leading-relaxed text-on-surface-variant md:text-base">
             To confirm your arrival at {space.name} and unlock your post-visit
             reflection, please share your location. We prioritize your privacy:
-            this is a one-time check to verify you are at the space. We do not
-            track your movements, store your history, or monitor you once you
-            are checked in.
+            this is a one-time check to verify you are at the space. Precise
+            coordinates are never stored. A successful check-in records only
+            the space, verification method, and visit time.
           </p>
         </div>
 
         <div className="w-full space-y-3">
-          <Link
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary-container shadow-lg shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.98]"
-            href={catalogSpacePath(space.slug, "/verify")}
-          >
-            <span className="material-symbols-outlined text-xl">my_location</span>
-            Allow Location Access
-          </Link>
+          <CheckInButton spaceId={space.id} spaceSlug={space.slug} />
           <Link
             className="flex h-12 w-full items-center justify-center rounded-xl border border-outline-variant/30 bg-transparent font-medium text-on-surface-variant transition-all hover:bg-surface-container-high active:scale-[0.98]"
             href={catalogSpacePath(space.slug)}

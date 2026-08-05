@@ -1,5 +1,5 @@
 from app.extensions import db
-from app.models import Space
+from app.models import Space, Visit
 
 
 def test_health_check(client):
@@ -198,9 +198,17 @@ def test_profile_recommendation_and_progress_flow(authenticated_client):
     assert body["recommendations"][0]["space"]["category"] == "library"
     assert body["recommendations"][0]["reason"].startswith("Recommended because")
 
-    space_id = body["recommendations"][0]["space"]["id"]
+    space = body["recommendations"][0]["space"]
+    space_id = space["id"]
     visit_response = authenticated_client.post(
-        "/api/visits", json={"space_id": space_id}
+        "/api/visits",
+        json={
+            "accuracy_meters": 10,
+            "latitude": space["latitude"],
+            "location_consent": True,
+            "longitude": space["longitude"],
+            "space_id": space_id,
+        },
     )
     assert visit_response.status_code == 201
 
@@ -223,6 +231,129 @@ def test_profile_recommendation_and_progress_flow(authenticated_client):
     assert progress["reflections"] == 1
     assert progress["xp"] >= 90
     assert len(progress["achievements"]) == 2
+
+
+def test_location_check_in_creates_verified_visit_without_coordinates(
+    app, authenticated_client
+):
+    space = authenticated_client.get(
+        "/api/spaces/cyberjaya-community-library"
+    ).get_json()["space"]
+    payload = {
+        "accuracy_meters": 12.5,
+        "latitude": space["latitude"],
+        "location_consent": True,
+        "longitude": space["longitude"],
+        "space_id": space["id"],
+    }
+
+    response = authenticated_client.post("/api/visits", json=payload)
+    body = response.get_json()
+
+    assert response.status_code == 201
+    assert body["already_checked_in"] is False
+    assert body["visit"]["verification_method"] == "location"
+    assert body["verification"]["distance_meters"] == 0
+    assert body["verification"]["accuracy_meters"] == 12.5
+    assert "latitude" not in body["visit"]
+    assert "longitude" not in body["visit"]
+
+    visit_response = authenticated_client.get(
+        f"/api/visits/{body['visit']['id']}"
+    )
+    assert visit_response.status_code == 200
+    assert visit_response.get_json()["visit"] == body["visit"]
+
+    with app.app_context():
+        assert "latitude" not in Visit.__table__.columns
+        assert "longitude" not in Visit.__table__.columns
+
+
+def test_location_check_in_is_idempotent_within_duplicate_window(
+    app, authenticated_client
+):
+    space = authenticated_client.get("/api/spaces/zus-coffee").get_json()["space"]
+    payload = {
+        "accuracy_meters": 15,
+        "latitude": space["latitude"],
+        "location_consent": True,
+        "longitude": space["longitude"],
+        "space_id": space["id"],
+    }
+
+    first = authenticated_client.post("/api/visits", json=payload)
+    second = authenticated_client.post("/api/visits", json=payload)
+
+    assert first.status_code == 201
+    assert second.status_code == 200
+    assert second.get_json()["already_checked_in"] is True
+    assert second.get_json()["visit"]["id"] == first.get_json()["visit"]["id"]
+    with app.app_context():
+        assert db.session.scalar(db.select(db.func.count(Visit.id))) == 1
+
+
+def test_location_check_in_rejects_unverified_readings(app, authenticated_client):
+    space = authenticated_client.get("/api/spaces/zus-coffee").get_json()["space"]
+    base_payload = {
+        "accuracy_meters": 15,
+        "latitude": space["latitude"],
+        "location_consent": True,
+        "longitude": space["longitude"],
+        "space_id": space["id"],
+    }
+    cases = [
+        (
+            {**base_payload, "location_consent": False},
+            400,
+            "Explicit location consent is required.",
+        ),
+        (
+            {**base_payload, "accuracy_meters": 500},
+            422,
+            "The location reading is not accurate enough to verify this visit.",
+        ),
+        (
+            {**base_payload, "latitude": 3.139, "longitude": 101.6869},
+            422,
+            "You are not close enough to this space to check in.",
+        ),
+    ]
+
+    for payload, status_code, error in cases:
+        response = authenticated_client.post("/api/visits", json=payload)
+        assert response.status_code == status_code
+        assert response.get_json()["error"] == error
+
+    with app.app_context():
+        assert db.session.scalar(db.select(db.func.count(Visit.id))) == 0
+
+
+def test_visit_details_are_private_to_the_visit_owner(authenticated_client):
+    space = authenticated_client.get("/api/spaces/zus-coffee").get_json()["space"]
+    visit = authenticated_client.post(
+        "/api/visits",
+        json={
+            "accuracy_meters": 10,
+            "latitude": space["latitude"],
+            "location_consent": True,
+            "longitude": space["longitude"],
+            "space_id": space["id"],
+        },
+    ).get_json()["visit"]
+
+    registration = authenticated_client.post(
+        "/api/auth/register",
+        json={
+            "email": "another.student@example.edu",
+            "name": "Another Student",
+            "password": "SecurePass123!",
+        },
+    )
+    response = authenticated_client.get(f"/api/visits/{visit['id']}")
+
+    assert registration.status_code == 201
+    assert response.status_code == 404
+    assert response.get_json()["error"] == "Visit not found."
 
 
 def test_recommendations_persist_ranked_results_and_history(authenticated_client):
