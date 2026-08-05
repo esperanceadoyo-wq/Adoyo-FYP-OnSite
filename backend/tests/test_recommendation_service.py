@@ -1,5 +1,5 @@
 from app.models import Space, UserProfile
-from app.services.recommendation_service import rank_spaces
+from app.services.recommendation_service import RecommendationFeedback, rank_spaces
 
 
 def test_rank_spaces_prefers_profile_match(app):
@@ -73,3 +73,43 @@ def test_rank_spaces_uses_location_only_with_per_request_consent(app):
     assert without_consent.distance_km is None
     assert with_consent.distance_km == 0
     assert with_consent.score == without_consent.score + 10
+
+
+def test_rank_spaces_uses_feedback_and_favors_unvisited_spaces(app):
+    profile = UserProfile(user_id=99)
+    visited = Space(
+        id=1,
+        name="Visited Cafe",
+        description="Visited",
+        category="cafe",
+        address="Cyberjaya",
+        amenities=[],
+        atmosphere_tags=[],
+        social_intensity=2,
+        noise_level="moderate",
+    )
+    unvisited = Space(
+        id=2,
+        name="New Cafe",
+        description="New",
+        category="cafe",
+        address="Cyberjaya",
+        amenities=[],
+        atmosphere_tags=[],
+        social_intensity=2,
+        noise_level="moderate",
+    )
+    feedback = RecommendationFeedback(
+        category_affinity={"cafe": 4},
+        noise_affinity={"moderate": 2},
+        preferred_social_rating=2,
+        reflection_count=1,
+        return_preferences={1: False},
+        visited_space_ids={1},
+    )
+
+    ranked = rank_spaces(profile, [visited, unvisited], feedback=feedback)
+
+    assert ranked[0].space.id == 2
+    assert ranked[0].score > ranked[1].score
+    assert "somewhere new to explore" in ranked[0].reason

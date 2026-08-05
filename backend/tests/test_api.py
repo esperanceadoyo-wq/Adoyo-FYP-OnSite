@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
 from app.extensions import db
-from app.models import Reflection, Space, Visit
+from app.models import Reflection, Space, User, Visit
+from app.services.progress_service import get_progress
 
 
 def _create_verified_visit(client, slug="zus-coffee"):
@@ -477,6 +480,110 @@ def test_visit_details_are_private_to_the_visit_owner(authenticated_client):
     assert response.get_json()["error"] == "Visit not found."
 
 
+def test_visit_and_reflection_history_are_enriched_and_private(
+    authenticated_client,
+):
+    space, visit = _create_verified_visit(authenticated_client)
+    reflection_response = authenticated_client.post(
+        "/api/reflections",
+        json={
+            "comfort_rating": 5,
+            "learning_value_rating": 4,
+            "social_rating": 3,
+            "space_id": space["id"],
+            "visit_id": visit["id"],
+            "would_return": True,
+        },
+    )
+
+    visits_response = authenticated_client.get("/api/visits?limit=1")
+    reflections_response = authenticated_client.get("/api/reflections?limit=1")
+    visit_history = visits_response.get_json()["visits"]
+    reflection_history = reflections_response.get_json()["reflections"]
+
+    assert reflection_response.status_code == 201
+    assert visits_response.status_code == 200
+    assert reflections_response.status_code == 200
+    assert visit_history[0]["space"]["slug"] == "zus-coffee"
+    assert visit_history[0]["reflection"]["id"] == reflection_history[0]["id"]
+    assert reflection_history[0]["visit"]["id"] == visit["id"]
+
+    authenticated_client.post(
+        "/api/auth/register",
+        json={
+            "email": "history.student@example.edu",
+            "name": "History Student",
+            "password": "SecurePass123!",
+        },
+    )
+
+    assert authenticated_client.get("/api/visits").get_json()["visits"] == []
+    assert authenticated_client.get("/api/reflections").get_json()["reflections"] == []
+
+
+def test_history_rejects_invalid_limits(authenticated_client):
+    invalid_number = authenticated_client.get("/api/visits?limit=recent")
+    out_of_range = authenticated_client.get("/api/reflections?limit=101")
+
+    assert invalid_number.status_code == 400
+    assert invalid_number.get_json()["error"] == "limit must be a whole number."
+    assert out_of_range.status_code == 400
+    assert out_of_range.get_json()["error"] == "limit must be between 1 and 100."
+
+
+def test_progress_uses_real_streak_weekly_activity_and_milestones(
+    app, authenticated_client
+):
+    now = datetime(2026, 8, 6, 12, tzinfo=timezone.utc)
+    with app.app_context():
+        user = db.session.scalar(
+            db.select(User).where(User.email == "demo@onsite.local")
+        )
+        space = db.session.scalar(
+            db.select(Space).where(Space.slug == "cyberjaya-community-library")
+        )
+        visits = [
+            Visit(
+                user_id=user.id,
+                space_id=space.id,
+                verification_method="location",
+                visited_at=now - timedelta(days=days),
+            )
+            for days in (0, 1, 2, 9)
+        ]
+        db.session.add_all(visits)
+        db.session.flush()
+        db.session.add(
+            Reflection(
+                comfort_rating=5,
+                created_at=now + timedelta(minutes=5),
+                learning_value_rating=4,
+                social_rating=3,
+                space_id=space.id,
+                user_id=user.id,
+                visit_id=visits[0].id,
+                would_return=True,
+            )
+        )
+        db.session.commit()
+
+        progress = get_progress(user.id, now=now)
+
+    assert progress["current_streak"] == 3
+    assert progress["weekly_goal"] == {
+        "completed": 3,
+        "percent": 60,
+        "target": 5,
+    }
+    assert len(progress["achievement_progress"]) == 6
+    assert progress["recent_activity"][0]["kind"] == "reflection"
+    assert progress["recent_activity"][0]["title"] == (
+        "Reflected on Cyberjaya Community Library"
+    )
+    assert progress["recent_activity"][0]["occurred_at"].endswith("+00:00")
+    assert progress["next_milestone"]["achievement"]["code"] == "CAMPUS_REGULAR"
+
+
 def test_recommendations_persist_ranked_results_and_history(authenticated_client):
     response = authenticated_client.post(
         "/api/recommendations", json={"mood": "focused", "limit": 3}
@@ -494,6 +601,39 @@ def test_recommendations_persist_ranked_results_and_history(authenticated_client
     assert history_response.status_code == 200
     assert len(history) == 3
     assert all(item["input_context"] == {"mood": "focused"} for item in history)
+
+
+def test_recommendations_use_prior_visits_and_reflections(authenticated_client):
+    space, visit = _create_verified_visit(authenticated_client)
+    reflection = authenticated_client.post(
+        "/api/reflections",
+        json={
+            "comfort_rating": 2,
+            "learning_value_rating": 2,
+            "social_rating": 4,
+            "space_id": space["id"],
+            "visit_id": visit["id"],
+            "would_return": False,
+        },
+    )
+    response = authenticated_client.post("/api/recommendations", json={"limit": 9})
+    recommendations = response.get_json()["recommendations"]
+    history = authenticated_client.get(
+        "/api/recommendations/history"
+    ).get_json()["recommendations"]
+
+    assert reflection.status_code == 201
+    assert response.status_code == 200
+    assert recommendations[0]["space"]["id"] != space["id"]
+    assert any("somewhere new to explore" in item["reason"] for item in recommendations)
+    assert all(
+        item["input_context"]
+        == {
+            "adaptive_feedback_used": True,
+            "visited_space_count": 1,
+        }
+        for item in history
+    )
 
 
 def test_recommendations_reject_invalid_context(authenticated_client):

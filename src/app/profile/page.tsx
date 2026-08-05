@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { AppChrome } from "@/components/AppChrome";
 import { getInitials } from "@/lib/auth";
-import { getDashboardData } from "@/lib/dashboard-data";
+import {
+  getDashboardData,
+  type AchievementProgress,
+} from "@/lib/dashboard-data";
 import { requireAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
@@ -16,11 +19,16 @@ export default async function ProfilePage() {
   const currentXp = progress?.current_level_xp ?? 0;
   const nextXp = progress?.next_level_xp ?? 200;
   const xpPercent = Math.min(100, Math.round((currentXp / nextXp) * 100));
-  const achievements = progress?.achievements ?? [];
+  const achievementProgress = progress?.achievement_progress ?? [];
   const visits = progress?.visits ?? 0;
   const reflections = progress?.reflections ?? 0;
-  const weeklyGoal = Math.min(visits, 5);
-  const weeklyPercent = Math.min(100, Math.round((weeklyGoal / 5) * 100));
+  const currentStreak = progress?.current_streak ?? 0;
+  const weeklyGoal = progress?.weekly_goal ?? {
+    completed: 0,
+    percent: 0,
+    target: 5,
+  };
+  const recentActivity = progress?.recent_activity ?? [];
 
   return (
     <AppChrome activeHref="/profile" progress={progress} user={user}>
@@ -106,9 +114,12 @@ export default async function ProfilePage() {
               label="Current Streak"
               marker={<StreakDots />}
               tone="amber"
-              value={visits > 0 ? "1 Day" : "0 Days"}
+              value={`${currentStreak} ${currentStreak === 1 ? "Day" : "Days"}`}
             />
-            <WeeklyGoalStat percent={weeklyPercent} value={`${weeklyGoal}/5`} />
+            <WeeklyGoalStat
+              percent={weeklyGoal.percent}
+              value={`${weeklyGoal.completed}/${weeklyGoal.target}`}
+            />
           </section>
 
           <section className="rounded-xl border border-[#1E293B] bg-[#161E2E] p-8 shadow-[0_0_20px_rgba(34,211,238,0.06)]">
@@ -119,24 +130,18 @@ export default async function ProfilePage() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-6">
-              <Badge
-                description="Complete onboarding."
-                icon="explore"
-                name="New Explorer"
-                tone="amber"
-                unlocked
-              />
-              <Badge
-                description="Visit 5 spaces."
-                icon="map"
-                name="Campus Wanderer"
-                tone="cyan"
-                unlocked={achievements.length > 1 || visits >= 5}
-              />
-              <Badge icon="groups" name="Community Connector" />
-              <Badge icon="interests" name="Cultural Navigator" />
-              <Badge icon="military_tech" name="Space Champion" />
-              <Badge icon="verified" name="Ambassador" />
+              {achievementProgress.map((item, index) => (
+                <Badge
+                  description={item.achievement.description}
+                  icon={achievementIcon(item.achievement.code)}
+                  key={item.achievement.code}
+                  name={item.achievement.name}
+                  tone={
+                    item.unlocked ? (index === 0 ? "amber" : "cyan") : "locked"
+                  }
+                  unlocked={item.unlocked}
+                />
+              ))}
             </div>
           </section>
 
@@ -144,13 +149,16 @@ export default async function ProfilePage() {
             <section className="rounded-xl border border-[#1E293B] bg-[#161E2E] p-6 shadow-[0_0_20px_rgba(34,211,238,0.06)] lg:col-span-2">
               <h3 className="mb-4 font-bold text-white">Recent Activity</h3>
               <div className="space-y-4">
-                <Activity title="Visited Cyberjaya Community Library" xp="+20 XP" />
-                <Activity
-                  border
-                  icon="rate_review"
-                  title="Reflection: First Week Vibes"
-                  xp="+15 XP"
-                />
+                {recentActivity.slice(0, 2).map((activity, index) => (
+                  <Activity
+                    border={index > 0}
+                    icon={activity.kind === "reflection" ? "rate_review" : "location_on"}
+                    key={activity.id}
+                    time={relativeActivityTime(activity.occurred_at)}
+                    title={activity.title}
+                    xp={`+${activity.xp} XP`}
+                  />
+                ))}
               </div>
             </section>
 
@@ -163,7 +171,7 @@ export default async function ProfilePage() {
               <div className="relative z-10">
                 <h3 className="font-bold text-white">Next Milestone</h3>
                 <p className="mt-1 text-xs text-[#94A3B8]">
-                  Unlock: Community Connector by visiting 3 more departments.
+                  {milestoneMessage(progress?.next_milestone ?? null)}
                 </p>
               </div>
             </section>
@@ -333,11 +341,13 @@ function Badge({
 function Activity({
   border = false,
   icon = "location_on",
+  time,
   title,
   xp,
 }: {
   border?: boolean;
   icon?: string;
+  time: string;
   title: string;
   xp: string;
 }) {
@@ -353,7 +363,7 @@ function Activity({
       <div className="flex-1">
         <p className="text-sm font-semibold text-white">{title}</p>
         <p className="text-[11px] text-[#94A3B8]">
-          Just now <span className="text-[#22D3EE]">{xp}</span>
+          {time} <span className="text-[#22D3EE]">{xp}</span>
         </p>
       </div>
       <span className="material-symbols-outlined text-[#22D3EE] opacity-0 transition-opacity group-hover:opacity-100">
@@ -368,4 +378,34 @@ function levelName(level: number) {
   if (level >= 3) return "Space Regular";
   if (level >= 2) return "Campus Wanderer";
   return "New Explorer";
+}
+
+function achievementIcon(code: string) {
+  const icons: Record<string, string> = {
+    CAMPUS_REGULAR: "interests",
+    FIRST_STEP: "explore",
+    ONSITE_AMBASSADOR: "verified",
+    REFLECTIVE_REGULAR: "military_tech",
+    SPACE_EXPLORER: "map",
+    THOUGHTFUL_EXPLORER: "groups",
+  };
+  return icons[code] ?? "military_tech";
+}
+
+function milestoneMessage(milestone: AchievementProgress | null) {
+  if (!milestone) return "Every available milestone has been unlocked.";
+  const requirement = milestone.requirements.find((item) => item.remaining > 0);
+  if (!requirement) return `Unlock: ${milestone.achievement.name}.`;
+  return `Unlock: ${milestone.achievement.name} with ${requirement.remaining} more ${requirement.metric}.`;
+}
+
+function relativeActivityTime(value: string) {
+  const timestamp = new Date(value).getTime();
+  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  if (elapsedMinutes < 1) return "Just now";
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m ago`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h ago`;
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  return `${elapsedDays}d ago`;
 }

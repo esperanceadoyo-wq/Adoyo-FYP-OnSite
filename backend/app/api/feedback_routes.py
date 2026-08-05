@@ -125,6 +125,34 @@ def get_visit(visit_id: int):
     return jsonify({"visit": visit.to_dict()})
 
 
+@feedback_bp.get("/visits")
+@login_required
+def visit_history():
+    limit, error = _history_limit()
+    if error:
+        return error
+    rows = db.session.execute(
+        db.select(Visit, Space, Reflection)
+        .join(Space, Space.id == Visit.space_id)
+        .outerjoin(Reflection, Reflection.visit_id == Visit.id)
+        .where(Visit.user_id == g.current_user.id)
+        .order_by(Visit.visited_at.desc(), Visit.id.desc())
+        .limit(limit)
+    ).all()
+    return jsonify(
+        {
+            "visits": [
+                {
+                    **visit.to_dict(),
+                    "reflection": reflection.to_dict() if reflection else None,
+                    "space": space.to_dict(),
+                }
+                for visit, space, reflection in rows
+            ]
+        }
+    )
+
+
 @feedback_bp.post("/reflections")
 @login_required
 def create_reflection():
@@ -205,3 +233,42 @@ def create_reflection():
         return jsonify({"error": "A reflection was already submitted for this visit."}), 409
     award_eligible_achievements(g.current_user.id)
     return jsonify({"reflection": reflection.to_dict()}), 201
+
+
+@feedback_bp.get("/reflections")
+@login_required
+def reflection_history():
+    limit, error = _history_limit()
+    if error:
+        return error
+    rows = db.session.execute(
+        db.select(Reflection, Space, Visit)
+        .join(Space, Space.id == Reflection.space_id)
+        .outerjoin(Visit, Visit.id == Reflection.visit_id)
+        .where(Reflection.user_id == g.current_user.id)
+        .order_by(Reflection.created_at.desc(), Reflection.id.desc())
+        .limit(limit)
+    ).all()
+    return jsonify(
+        {
+            "reflections": [
+                {
+                    **reflection.to_dict(),
+                    "space": space.to_dict(),
+                    "visit": visit.to_dict() if visit else None,
+                }
+                for reflection, space, visit in rows
+            ]
+        }
+    )
+
+
+def _history_limit():
+    raw_limit = request.args.get("limit", "50")
+    try:
+        limit = int(raw_limit)
+    except (TypeError, ValueError):
+        return None, (jsonify({"error": "limit must be a whole number."}), 400)
+    if limit < 1 or limit > 100:
+        return None, (jsonify({"error": "limit must be between 1 and 100."}), 400)
+    return limit, None

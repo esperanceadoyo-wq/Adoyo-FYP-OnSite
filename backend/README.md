@@ -32,8 +32,8 @@ Demo credentials after seeding:
 - `GET`, `PUT /api/profile`
 - `GET /api/spaces` and `GET /api/spaces/<id>`
 - `POST /api/recommendations` and `GET /api/recommendations/history`
-- `POST /api/visits`
-- `POST /api/reflections`
+- `GET`, `POST /api/visits`
+- `GET`, `POST /api/reflections`
 - `GET /api/progress`
 - `GET /api/achievements`
 - Admin-only `POST`, `PATCH`, and `DELETE` operations under `/api/spaces`
@@ -46,6 +46,9 @@ public catalog endpoints.
 Authentication uses a signed HTTP-only Flask session cookie. Browser location is
 used for an individual recommendation request only when the profile contains
 explicit location consent; precise location history is not stored.
+Visit and reflection history is private to the authenticated user. Recommendation
+ranking uses summarized ratings, return preferences, and previously visited spaces;
+reflection text is not copied into recommendation history.
 
 ## Database migrations
 

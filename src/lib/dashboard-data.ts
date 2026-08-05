@@ -22,11 +22,49 @@ export type UserProgress = {
       points: number;
     } | null;
   }>;
+  achievement_progress: AchievementProgress[];
+  current_streak: number;
   current_level_xp: number;
   level: number;
   next_level_xp: number;
   reflections: number;
+  recent_activity: JourneyActivity[];
+  next_milestone: AchievementProgress | null;
   visits: number;
+  weekly_goal: {
+    completed: number;
+    percent: number;
+    target: number;
+  };
+  xp: number;
+};
+
+export type AchievementProgress = {
+  achievement: {
+    code: string;
+    description: string;
+    name: string;
+    points: number;
+  };
+  awarded_at: string | null;
+  requirements: Array<{
+    completed: number;
+    metric: "reflections" | "visits";
+    remaining: number;
+    target: number;
+  }>;
+  unlocked: boolean;
+};
+
+export type JourneyActivity = {
+  id: string;
+  kind: "reflection" | "visit";
+  occurred_at: string;
+  space: {
+    name: string;
+    slug: string;
+  };
+  title: string;
   xp: number;
 };
 

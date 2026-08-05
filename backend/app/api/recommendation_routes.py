@@ -2,8 +2,8 @@ from flask import Blueprint, g, jsonify, request
 
 from ..auth import login_required
 from ..extensions import db
-from ..models import Recommendation, Space, UserProfile
-from ..services.recommendation_service import rank_spaces
+from ..models import Recommendation, Reflection, Space, UserProfile, Visit
+from ..services.recommendation_service import RecommendationFeedback, rank_spaces
 
 recommendations_bp = Blueprint(
     "recommendations", __name__, url_prefix="/api/recommendations"
@@ -74,7 +74,8 @@ def recommendations():
         limit = min(max(int(raw_limit), 1), 20)
     except (TypeError, ValueError):
         return jsonify({"error": "limit must be a whole number."}), 400
-    ranked = rank_spaces(profile, spaces, payload)[:limit]
+    feedback = _recommendation_feedback(g.current_user.id)
+    ranked = rank_spaces(profile, spaces, payload, feedback)[:limit]
     response_items = []
 
     for item in ranked:
@@ -86,6 +87,14 @@ def recommendations():
             input_context={
                 **({"mood": mood} if mood is not None else {}),
                 **({"location_used": True} if has_latitude else {}),
+                **(
+                    {
+                        "adaptive_feedback_used": True,
+                        "visited_space_count": len(feedback.visited_space_ids),
+                    }
+                    if feedback.reflection_count or feedback.visited_space_ids
+                    else {}
+                ),
             },
         )
         db.session.add(record)
@@ -112,3 +121,47 @@ def recommendation_history():
         .limit(50)
     ).all()
     return jsonify({"recommendations": [record.to_dict() for record in records]})
+
+
+def _recommendation_feedback(user_id: int) -> RecommendationFeedback:
+    visited_space_ids = set(
+        db.session.scalars(
+            db.select(Visit.space_id).where(Visit.user_id == user_id)
+        ).all()
+    )
+    rows = db.session.execute(
+        db.select(Reflection, Space)
+        .join(Space, Space.id == Reflection.space_id)
+        .where(Reflection.user_id == user_id)
+        .order_by(Reflection.created_at.desc())
+    ).all()
+    category_values: dict[str, list[float]] = {}
+    noise_values: dict[str, list[float]] = {}
+    social_values: list[float] = []
+    return_preferences: dict[int, bool] = {}
+
+    for reflection, space in rows:
+        learning_rating = reflection.learning_value_rating or reflection.comfort_rating
+        preference_rating = (reflection.comfort_rating + learning_rating) / 2
+        affinity = ((preference_rating - 3) / 2) * 8
+        category_values.setdefault(space.category, []).append(affinity)
+        noise_values.setdefault(space.noise_level, []).append(affinity / 2)
+        if reflection.social_rating is not None:
+            social_values.append(1 + (reflection.social_rating - 1) / 2)
+        if reflection.would_return is not None:
+            return_preferences.setdefault(space.id, reflection.would_return)
+
+    return RecommendationFeedback(
+        category_affinity={
+            key: sum(values) / len(values) for key, values in category_values.items()
+        },
+        noise_affinity={
+            key: sum(values) / len(values) for key, values in noise_values.items()
+        },
+        preferred_social_rating=(
+            sum(social_values) / len(social_values) if social_values else None
+        ),
+        reflection_count=len(rows),
+        return_preferences=return_preferences,
+        visited_space_ids=visited_space_ids,
+    )

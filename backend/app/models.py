@@ -10,7 +10,11 @@ def utc_now() -> datetime:
 
 
 def isoformat(value: datetime | None) -> str | None:
-    return value.isoformat() if value else None
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.isoformat()
 
 
 class TimestampMixin:

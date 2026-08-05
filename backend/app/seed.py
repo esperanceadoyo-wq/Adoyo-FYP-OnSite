@@ -191,6 +191,27 @@ ACHIEVEMENTS = [
         "points": 50,
         "criteria": {"visits": 3},
     },
+    {
+        "code": "CAMPUS_REGULAR",
+        "name": "Campus Regular",
+        "description": "Record five third-space visits.",
+        "points": 75,
+        "criteria": {"visits": 5},
+    },
+    {
+        "code": "REFLECTIVE_REGULAR",
+        "name": "Reflective Regular",
+        "description": "Complete five post-visit reflections.",
+        "points": 100,
+        "criteria": {"reflections": 5},
+    },
+    {
+        "code": "ONSITE_AMBASSADOR",
+        "name": "OnSite Ambassador",
+        "description": "Record ten visits and complete ten reflections.",
+        "points": 200,
+        "criteria": {"visits": 10, "reflections": 10},
+    },
 ]
 
 
