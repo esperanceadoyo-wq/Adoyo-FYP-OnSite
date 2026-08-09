@@ -10,11 +10,17 @@ export const metadata: Metadata = {
 
 export default async function SettingsPage() {
   const user = await requireAuth("/settings");
-  const { progress } = await getDashboardData();
+  const { profile, progress } = await getDashboardData();
 
   return (
     <AppChrome activeHref="/settings" progress={progress} user={user}>
-      <SettingsPageClient email={user.email} name={user.name} />
+      <SettingsPageClient
+        activityVisible={profile?.activity_visible ?? false}
+        email={user.email}
+        leaderboardVisible={profile?.leaderboard_visible ?? true}
+        locationConsent={profile?.location_consent ?? false}
+        name={user.name}
+      />
     </AppChrome>
   );
 }

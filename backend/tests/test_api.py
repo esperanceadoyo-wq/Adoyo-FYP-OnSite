@@ -176,6 +176,117 @@ def test_protected_routes_require_authentication(client):
     assert response.get_json()["error"] == "Authentication required."
 
 
+def test_account_settings_persist_name_and_privacy_without_password(
+    authenticated_client,
+):
+    response = authenticated_client.patch(
+        "/api/auth/account",
+        json={
+            "activity_visible": True,
+            "leaderboard_visible": False,
+            "location_consent": True,
+            "name": "Updated Explorer",
+        },
+    )
+    profile_response = authenticated_client.get("/api/profile")
+    user_response = authenticated_client.get("/api/auth/me")
+
+    assert response.status_code == 200
+    assert response.get_json()["user"]["name"] == "Updated Explorer"
+    assert user_response.get_json()["user"]["name"] == "Updated Explorer"
+    profile = profile_response.get_json()["profile"]
+    assert profile["activity_visible"] is True
+    assert profile["leaderboard_visible"] is False
+    assert profile["location_consent"] is True
+
+
+def test_sensitive_account_settings_require_the_current_password(
+    authenticated_client,
+):
+    missing_password = authenticated_client.patch(
+        "/api/auth/account", json={"email": "updated@example.edu"}
+    )
+    wrong_password = authenticated_client.patch(
+        "/api/auth/account",
+        json={
+            "current_password": "WrongPass123!",
+            "email": "updated@example.edu",
+        },
+    )
+    unchanged_user = authenticated_client.get("/api/auth/me").get_json()["user"]
+
+    assert missing_password.status_code == 403
+    assert wrong_password.status_code == 403
+    assert unchanged_user["email"] == "demo@onsite.local"
+
+
+def test_account_settings_update_email_and_password(authenticated_client):
+    response = authenticated_client.patch(
+        "/api/auth/account",
+        json={
+            "current_password": "DemoPass123!",
+            "email": "updated@example.edu",
+            "new_password": "UpdatedPass456!",
+        },
+    )
+    authenticated_client.post("/api/auth/logout")
+    old_credentials = authenticated_client.post(
+        "/api/auth/login",
+        json={"email": "demo@onsite.local", "password": "DemoPass123!"},
+    )
+    new_credentials = authenticated_client.post(
+        "/api/auth/login",
+        json={"email": "updated@example.edu", "password": "UpdatedPass456!"},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["user"]["email"] == "updated@example.edu"
+    assert old_credentials.status_code == 401
+    assert new_credentials.status_code == 200
+
+
+def test_account_settings_reject_duplicate_email_weak_password_and_invalid_privacy(
+    authenticated_client,
+):
+    authenticated_client.post("/api/auth/logout")
+    registration = authenticated_client.post(
+        "/api/auth/register",
+        json={
+            "email": "existing@example.edu",
+            "name": "Existing User",
+            "password": "ExistingPass123!",
+        },
+    )
+    authenticated_client.post("/api/auth/logout")
+    authenticated_client.post(
+        "/api/auth/login",
+        json={"email": "demo@onsite.local", "password": "DemoPass123!"},
+    )
+
+    duplicate_email = authenticated_client.patch(
+        "/api/auth/account",
+        json={
+            "current_password": "DemoPass123!",
+            "email": "EXISTING@example.edu",
+        },
+    )
+    weak_password = authenticated_client.patch(
+        "/api/auth/account",
+        json={
+            "current_password": "DemoPass123!",
+            "new_password": "weak",
+        },
+    )
+    invalid_privacy = authenticated_client.patch(
+        "/api/auth/account", json={"leaderboard_visible": "yes"}
+    )
+
+    assert registration.status_code == 201
+    assert duplicate_email.status_code == 409
+    assert weak_password.status_code == 400
+    assert invalid_privacy.status_code == 400
+
+
 def test_student_cannot_manage_spaces(authenticated_client):
     response = authenticated_client.post(
         "/api/spaces",

@@ -39,7 +39,7 @@ def register():
         return jsonify({
             "error": "Password must be at least 8 characters and include uppercase, lowercase, and a number."
         }), 400
-    if db.session.scalar(db.select(User).where(User.email == email)):
+    if db.session.scalar(db.select(User).where(db.func.lower(User.email) == email)):
         return jsonify({"error": "An account with that email already exists."}), 409
 
     user = User(name=name, email=email)
@@ -66,6 +66,83 @@ def login():
     session.clear()
     session["user_id"] = user.id
     return jsonify({"user": user.to_dict()})
+
+
+@auth_bp.patch("/account")
+@login_required
+def update_account():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "A JSON object is required."}), 400
+
+    user = g.current_user
+    profile = db.session.scalar(
+        db.select(UserProfile).where(UserProfile.user_id == user.id)
+    )
+    if profile is None:
+        profile = UserProfile(user_id=user.id)
+        db.session.add(profile)
+
+    name = user.name
+    if "name" in payload:
+        if not isinstance(payload["name"], str):
+            return jsonify({"error": "Name must be a string."}), 400
+        name = payload["name"].strip()
+        if len(name) < 2 or len(name) > 120:
+            return jsonify({"error": "Name must be between 2 and 120 characters."}), 400
+
+    email = user.email
+    if "email" in payload:
+        if not isinstance(payload["email"], str):
+            return jsonify({"error": "Email must be a string."}), 400
+        email = payload["email"].strip().lower()
+        if len(email) > 255 or not EMAIL_PATTERN.match(email):
+            return jsonify({"error": "Enter a valid email address."}), 400
+
+    new_password = payload.get("new_password")
+    if new_password == "":
+        new_password = None
+    if new_password is not None and not isinstance(new_password, str):
+        return jsonify({"error": "New password must be a string."}), 400
+    if new_password is not None and not password_is_valid(new_password):
+        return jsonify({
+            "error": "Password must be at least 8 characters and include uppercase, lowercase, and a number."
+        }), 400
+
+    sensitive_change = email != user.email or new_password is not None
+    if sensitive_change:
+        current_password = payload.get("current_password")
+        if not isinstance(current_password, str) or not user.check_password(
+            current_password
+        ):
+            return jsonify({"error": "Current password is incorrect."}), 403
+
+    if email != user.email and db.session.scalar(
+        db.select(User.id).where(
+            db.func.lower(User.email) == email,
+            User.id != user.id,
+        )
+    ):
+        return jsonify({"error": "An account with that email already exists."}), 409
+
+    privacy_fields = (
+        "location_consent",
+        "leaderboard_visible",
+        "activity_visible",
+    )
+    for field in privacy_fields:
+        if field in payload:
+            if not isinstance(payload[field], bool):
+                return jsonify({"error": f"{field} must be a boolean."}), 400
+            setattr(profile, field, payload[field])
+
+    user.name = name
+    user.email = email
+    if new_password is not None:
+        user.set_password(new_password)
+
+    db.session.commit()
+    return jsonify({"profile": profile.to_dict(), "user": user.to_dict()})
 
 
 @auth_bp.post("/logout")

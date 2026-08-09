@@ -3,6 +3,7 @@ import { getBackendUrl } from "@/lib/backend";
 import type { SpaceRecommendation } from "@/lib/recommendations";
 
 export type UserProfile = {
+  activity_visible: boolean;
   avatar_url: string | null;
   comfort_level: string | null;
   current_mood: string | null;
@@ -10,6 +11,7 @@ export type UserProfile = {
   interests: string[];
   learning_goals: string[];
   location_consent: boolean;
+  leaderboard_visible: boolean;
   noise_tolerance: string | null;
   preferred_amenities: string[];
   preferred_social_intensity: number | null;

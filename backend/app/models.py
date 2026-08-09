@@ -84,6 +84,8 @@ class UserProfile(TimestampMixin, db.Model):
     preferred_space_types = db.Column(db.JSON, nullable=False, default=list)
     preferred_amenities = db.Column(db.JSON, nullable=False, default=list)
     location_consent = db.Column(db.Boolean, nullable=False, default=False)
+    leaderboard_visible = db.Column(db.Boolean, nullable=False, default=True)
+    activity_visible = db.Column(db.Boolean, nullable=False, default=False)
 
     def to_dict(self) -> dict:
         return {
@@ -101,6 +103,8 @@ class UserProfile(TimestampMixin, db.Model):
             "preferred_space_types": self.preferred_space_types or [],
             "preferred_amenities": self.preferred_amenities or [],
             "location_consent": self.location_consent,
+            "leaderboard_visible": self.leaderboard_visible,
+            "activity_visible": self.activity_visible,
             "updated_at": isoformat(self.updated_at),
         }
 

@@ -29,6 +29,7 @@ Demo credentials after seeding:
 
 - `POST /api/auth/register`, `/login`, `/logout`, `/forgot-password`, `/reset-password`
 - `GET /api/auth/me`
+- `PATCH /api/auth/account`
 - `GET`, `PUT /api/profile`
 - `GET`, `POST /api/profile/avatar`
 - `GET /api/spaces` and `GET /api/spaces/<id>`
@@ -55,6 +56,10 @@ Password reset links expire after 30 minutes and can only be used once. Local
 development exposes the generated reset link in the response so the flow can be
 tested without an email provider. Set `EXPOSE_PASSWORD_RESET_TOKEN=false` when an
 email delivery service is connected.
+
+Account settings update the user and profile in one transaction. Changing an
+email address or password requires the current password; name and privacy-only
+changes do not. Emails are normalized before duplicate checks.
 
 ## Database migrations
 

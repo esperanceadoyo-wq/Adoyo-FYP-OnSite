@@ -1,17 +1,42 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UserAvatar } from "@/components/UserAvatar";
+import type { AuthUser } from "@/lib/auth";
+import { validateEmail, validateName, validatePassword } from "@/lib/auth";
+import type { UserProfile } from "@/lib/dashboard-data";
 import { applyTheme, useTheme } from "@/lib/theme";
 
 export function SettingsPageClient({
+  activityVisible,
   email,
+  leaderboardVisible,
+  locationConsent,
   name,
 }: {
+  activityVisible: boolean;
   email: string;
+  leaderboardVisible: boolean;
+  locationConsent: boolean;
   name: string;
 }) {
+  const router = useRouter();
   const theme = useTheme();
+  const [accountName, setAccountName] = useState(name);
+  const [accountEmail, setAccountEmail] = useState(email);
+  const [newPassword, setNewPassword] = useState("");
+  const [showOnLeaderboard, setShowOnLeaderboard] = useState(leaderboardVisible);
+  const [showActivity, setShowActivity] = useState(activityVisible);
+  const [allowLocation, setAllowLocation] = useState(locationConsent);
+  const [savedSettings, setSavedSettings] = useState({
+    activityVisible,
+    email,
+    leaderboardVisible,
+    locationConsent,
+    name,
+  });
+  const [isSaving, setIsSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [avatarStatus, setAvatarStatus] = useState("");
@@ -66,6 +91,94 @@ export function SettingsPageClient({
     }
   }
 
+  async function saveChanges() {
+    const normalizedName = accountName.trim();
+    const normalizedEmail = accountEmail.trim().toLowerCase();
+
+    if (!validateName(normalizedName)) {
+      window.alert("Name must be at least 2 characters.");
+      return;
+    }
+    if (!validateEmail(normalizedEmail)) {
+      window.alert("Enter a valid email address.");
+      return;
+    }
+    if (newPassword && !validatePassword(newPassword)) {
+      window.alert(
+        "Password must be at least 8 characters and include uppercase, lowercase, and a number.",
+      );
+      return;
+    }
+
+    const sensitiveChange =
+      normalizedEmail !== savedSettings.email || Boolean(newPassword);
+    let currentPassword: string | undefined;
+    if (sensitiveChange) {
+      const suppliedPassword = window.prompt(
+        "Enter your current password to confirm this account change.",
+      );
+      if (suppliedPassword === null) return;
+      currentPassword = suppliedPassword;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/auth/account", {
+        body: JSON.stringify({
+          activity_visible: showActivity,
+          current_password: currentPassword,
+          email: normalizedEmail,
+          leaderboard_visible: showOnLeaderboard,
+          location_consent: allowLocation,
+          name: normalizedName,
+          ...(newPassword ? { new_password: newPassword } : {}),
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PATCH",
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        profile?: UserProfile;
+        user?: AuthUser;
+      };
+
+      if (!response.ok || !data.profile || !data.user) {
+        window.alert(data.error || "Your settings could not be saved.");
+        return;
+      }
+
+      const nextSavedSettings = {
+        activityVisible: data.profile.activity_visible,
+        email: data.user.email,
+        leaderboardVisible: data.profile.leaderboard_visible,
+        locationConsent: data.profile.location_consent,
+        name: data.user.name,
+      };
+      setAccountName(nextSavedSettings.name);
+      setAccountEmail(nextSavedSettings.email);
+      setShowOnLeaderboard(nextSavedSettings.leaderboardVisible);
+      setShowActivity(nextSavedSettings.activityVisible);
+      setAllowLocation(nextSavedSettings.locationConsent);
+      setSavedSettings(nextSavedSettings);
+      setNewPassword("");
+      window.alert("Settings saved successfully.");
+      router.refresh();
+    } catch {
+      window.alert("Could not reach the backend. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function resetChanges() {
+    setAccountName(savedSettings.name);
+    setAccountEmail(savedSettings.email);
+    setNewPassword("");
+    setShowOnLeaderboard(savedSettings.leaderboardVisible);
+    setShowActivity(savedSettings.activityVisible);
+    setAllowLocation(savedSettings.locationConsent);
+  }
+
   return (
     <div className="relative overflow-hidden text-on-background antialiased">
       <div className="relative z-10 flex w-full justify-center">
@@ -86,7 +199,7 @@ export function SettingsPageClient({
                 <UserAvatar
                   className="h-20 w-20 rounded-full border-2 border-primary/50 text-xl"
                   key={avatarPreview || "saved-avatar"}
-                  name={name}
+                  name={accountName}
                   sizes="80px"
                   src={avatarPreview || undefined}
                 />
@@ -136,24 +249,28 @@ export function SettingsPageClient({
             <Field label="Account Name">
               <input
                 className={inputClassName}
-                defaultValue={name}
+                onChange={(event) => setAccountName(event.target.value)}
                 placeholder="Enter display name"
                 type="text"
+                value={accountName}
               />
             </Field>
             <Field label="Email Address">
               <input
                 className={inputClassName}
-                defaultValue={email}
+                onChange={(event) => setAccountEmail(event.target.value)}
                 placeholder="Enter email address"
                 type="email"
+                value={accountEmail}
               />
             </Field>
             <Field label="Change Password">
               <input
                 className={inputClassName}
+                onChange={(event) => setNewPassword(event.target.value)}
                 placeholder="Enter new password"
                 type="password"
+                value={newPassword}
               />
             </Field>
           </div>
@@ -189,25 +306,46 @@ export function SettingsPageClient({
           <SectionHeader icon="shield" title="Privacy Settings" />
           <div className="space-y-4">
             <ToggleRow
-              defaultChecked
+              checked={showOnLeaderboard}
               description="Allow your ranking and XP to be visible to the community."
               id="leaderboard"
+              onChange={setShowOnLeaderboard}
               title="Show on Leaderboard"
             />
             <div className="h-px bg-outline-variant" />
             <ToggleRow
+              checked={allowLocation}
+              description="Allow location-based features when you explicitly request them."
+              id="location"
+              onChange={setAllowLocation}
+              title="Allow Location Access"
+            />
+            <div className="h-px bg-outline-variant" />
+            <ToggleRow
+              checked={showActivity}
               description="Let others see when you are currently active on the platform."
               id="activity"
+              onChange={setShowActivity}
               title="Show activity status"
             />
           </div>
         </section>
 
         <div className="flex flex-col gap-3 pt-4">
-          <button className="w-full rounded-xl bg-primary py-4 font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-[0.98]">
+          <button
+            className="w-full rounded-xl bg-primary py-4 font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-60"
+            disabled={isSaving}
+            onClick={saveChanges}
+            type="button"
+          >
             Save Changes
           </button>
-          <button className="w-full rounded-xl border border-outline bg-transparent py-3 font-medium text-on-surface-variant transition-all hover:bg-surface-container-low">
+          <button
+            className="w-full rounded-xl border border-outline bg-transparent py-3 font-medium text-on-surface-variant transition-all hover:bg-surface-container-low disabled:opacity-60"
+            disabled={isSaving}
+            onClick={resetChanges}
+            type="button"
+          >
             Reset to Default
           </button>
         </div>
@@ -274,14 +412,16 @@ function ThemeButton({
 }
 
 function ToggleRow({
-  defaultChecked = false,
+  checked,
   description,
   id,
+  onChange,
   title,
 }: {
-  defaultChecked?: boolean;
+  checked: boolean;
   description: string;
   id: string;
+  onChange: (checked: boolean) => void;
   title: string;
 }) {
   return (
@@ -293,8 +433,9 @@ function ToggleRow({
       <label className="relative inline-flex h-6 w-12 shrink-0 cursor-pointer items-center">
         <input
           className="peer sr-only"
-          defaultChecked={defaultChecked}
+          checked={checked}
           id={id}
+          onChange={(event) => onChange(event.target.checked)}
           type="checkbox"
         />
         <span className="absolute inset-0 rounded-full bg-outline transition-colors duration-300 peer-checked:bg-primary" />
