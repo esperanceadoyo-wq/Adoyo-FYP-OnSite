@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { SaveSpaceButton } from "@/components/SaveSpaceButton";
 import { requireAuth } from "@/lib/server-auth";
 import { requireSpace } from "@/lib/server-spaces";
+import { getSavedSpaces } from "@/lib/saved-spaces";
 import { catalogSpacePath } from "@/lib/space-flow";
 import { getSpaceDetails, type Space } from "@/lib/spaces";
 
@@ -22,6 +24,8 @@ export default async function SpaceDetailsPage({ params }: SpaceRouteProps) {
   const { spaceId } = await params;
   await requireAuth(catalogSpacePath(spaceId));
   const space = await requireSpace(spaceId);
+  const { savedSpaces } = await getSavedSpaces();
+  const initialSaved = savedSpaces.some((saved) => saved.space_id === space.id);
 
   return (
     <main className="min-h-screen bg-background text-on-surface">
@@ -71,10 +75,10 @@ export default async function SpaceDetailsPage({ params }: SpaceRouteProps) {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
-                  <button className="flex items-center gap-2 rounded-xl border border-primary px-8 py-3 font-bold text-primary transition-all hover:bg-primary/10">
-                    <span className="material-symbols-outlined">bookmark</span>
-                    Save
-                  </button>
+                  <SaveSpaceButton
+                    initialSaved={initialSaved}
+                    spaceId={space.id}
+                  />
                   <Link
                     className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-bold text-on-primary transition-all hover:opacity-90"
                     href={catalogSpacePath(space.slug, "/location")}

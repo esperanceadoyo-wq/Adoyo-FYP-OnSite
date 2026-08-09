@@ -253,6 +253,37 @@ class Recommendation(db.Model):
         }
 
 
+class SavedSpace(db.Model):
+    __tablename__ = "saved_spaces"
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "space_id", name="uq_saved_space_user_space"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    space_id = db.Column(
+        db.Integer,
+        db.ForeignKey("spaces.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
+
+    def to_dict(self, space: Space | None = None) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "space_id": self.space_id,
+            "created_at": isoformat(self.created_at),
+            "space": space.to_dict() if space else None,
+        }
+
+
 class Achievement(db.Model):
     __tablename__ = "achievements"
 

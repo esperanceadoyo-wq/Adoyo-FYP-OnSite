@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
 from app.extensions import db
-from app.models import Reflection, Space, User, Visit
+from app.models import Reflection, SavedSpace, Space, User, Visit
 from app.services.progress_service import get_progress
 
 
@@ -95,6 +95,115 @@ def test_space_catalog_hides_inactive_spaces(app, client):
     )
     assert detail_response.status_code == 404
     assert slug_response.status_code == 404
+
+
+def test_saved_spaces_require_authentication(client):
+    catalog_space = client.get("/api/spaces").get_json()["spaces"][0]
+
+    assert client.get("/api/saved-spaces").status_code == 401
+    assert client.post(
+        "/api/saved-spaces", json={"space_id": catalog_space["id"]}
+    ).status_code == 401
+    assert client.delete(
+        f"/api/saved-spaces/{catalog_space['id']}"
+    ).status_code == 401
+
+
+def test_saved_spaces_can_be_listed_saved_idempotently_and_removed(
+    app, authenticated_client
+):
+    space = authenticated_client.get(
+        "/api/spaces/cyberjaya-community-library"
+    ).get_json()["space"]
+
+    first_save = authenticated_client.post(
+        "/api/saved-spaces", json={"space_id": space["id"]}
+    )
+    repeated_save = authenticated_client.post(
+        "/api/saved-spaces", json={"space_id": space["id"]}
+    )
+    saved_list = authenticated_client.get("/api/saved-spaces")
+
+    assert first_save.status_code == 201
+    assert repeated_save.status_code == 200
+    assert repeated_save.get_json()["saved_space"]["id"] == first_save.get_json()[
+        "saved_space"
+    ]["id"]
+    assert saved_list.status_code == 200
+    assert len(saved_list.get_json()["saved_spaces"]) == 1
+    assert saved_list.get_json()["saved_spaces"][0]["space"]["slug"] == space["slug"]
+
+    with app.app_context():
+        assert db.session.scalar(db.select(db.func.count(SavedSpace.id))) == 1
+
+    removed = authenticated_client.delete(f"/api/saved-spaces/{space['id']}")
+    missing_remove = authenticated_client.delete(f"/api/saved-spaces/{space['id']}")
+
+    assert removed.status_code == 200
+    assert missing_remove.status_code == 404
+    assert authenticated_client.get("/api/saved-spaces").get_json()[
+        "saved_spaces"
+    ] == []
+
+
+def test_saved_spaces_are_private_to_each_user(app, authenticated_client):
+    space = authenticated_client.get("/api/spaces?category=cafe").get_json()[
+        "spaces"
+    ][0]
+    first_save = authenticated_client.post(
+        "/api/saved-spaces", json={"space_id": space["id"]}
+    )
+
+    other_client = app.test_client()
+    registration = other_client.post(
+        "/api/auth/register",
+        json={
+            "email": "saved-owner@example.edu",
+            "name": "Saved Owner",
+            "password": "SavedPass123!",
+        },
+    )
+    other_list = other_client.get("/api/saved-spaces")
+    other_remove = other_client.delete(f"/api/saved-spaces/{space['id']}")
+
+    assert first_save.status_code == 201
+    assert registration.status_code == 201
+    assert other_list.get_json()["saved_spaces"] == []
+    assert other_remove.status_code == 404
+    assert len(
+        authenticated_client.get("/api/saved-spaces").get_json()["saved_spaces"]
+    ) == 1
+
+
+def test_saved_spaces_reject_invalid_or_inactive_spaces(app, authenticated_client):
+    invalid_id = authenticated_client.post(
+        "/api/saved-spaces", json={"space_id": "one"}
+    )
+    missing_space = authenticated_client.post(
+        "/api/saved-spaces", json={"space_id": 999999}
+    )
+    space = authenticated_client.get("/api/spaces?category=park").get_json()[
+        "spaces"
+    ][0]
+    saved = authenticated_client.post(
+        "/api/saved-spaces", json={"space_id": space["id"]}
+    )
+
+    with app.app_context():
+        stored_space = db.session.get(Space, space["id"])
+        stored_space.is_active = False
+        db.session.commit()
+
+    inactive_save = authenticated_client.post(
+        "/api/saved-spaces", json={"space_id": space["id"]}
+    )
+    saved_list = authenticated_client.get("/api/saved-spaces")
+
+    assert invalid_id.status_code == 400
+    assert missing_space.status_code == 404
+    assert saved.status_code == 201
+    assert inactive_save.status_code == 404
+    assert saved_list.get_json()["saved_spaces"] == []
 
 
 def test_register_creates_authenticated_user_and_profile(client):
