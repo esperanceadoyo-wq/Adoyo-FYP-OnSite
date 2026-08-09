@@ -8,13 +8,14 @@ import {
   LogoutButton,
 } from "@/components/DashboardAuth";
 import { NearbyRecommendations } from "@/components/NearbyRecommendations";
+import { UserAvatar } from "@/components/UserAvatar";
 import {
   getDashboardData,
   type UserProfile,
   type UserProgress,
 } from "@/lib/dashboard-data";
 import { requireAuth } from "@/lib/server-auth";
-import { getInitials, type AuthUser } from "@/lib/auth";
+import type { AuthUser } from "@/lib/auth";
 import type { SpaceRecommendation } from "@/lib/recommendations";
 import { catalogSpacePath } from "@/lib/space-flow";
 import type { Space } from "@/lib/spaces";
@@ -208,11 +209,17 @@ function DashboardHeader({
           >
             <Icon className="h-5 w-5" name="notification" />
           </a>
-          <button className="h-10 w-10 overflow-hidden rounded-full border-2 border-primary transition-transform active:scale-95">
-            <span className="flex h-full w-full items-center justify-center bg-surface-variant text-on-surface-variant">
-              <span className="text-xs font-extrabold">{getInitials(user.name)}</span>
-            </span>
-          </button>
+          <Link
+            aria-label="View profile"
+            className="rounded-full border-2 border-primary transition-transform active:scale-95"
+            href="/profile"
+          >
+            <UserAvatar
+              className="h-9 w-9 rounded-full text-xs"
+              name={user.name}
+              sizes="36px"
+            />
+          </Link>
         </div>
       </div>
     </header>
@@ -401,7 +408,7 @@ function RecommendationCard({
 }: {
   recommendation: SpaceRecommendation;
 }) {
-  const { reason, score, space } = recommendation;
+  const { score, space } = recommendation;
   const tags = recommendationTags(space);
 
   return (
@@ -427,7 +434,7 @@ function RecommendationCard({
         <p className="mb-4 line-clamp-2 text-sm text-on-surface-variant">
           {space.description}
         </p>
-        <div className="custom-scrollbar mb-6 flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="custom-scrollbar mb-5 flex items-center gap-2 overflow-x-auto pb-1">
           {tags.map((tag) => (
             <span
               className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-bold ${tag.className}`}
@@ -438,9 +445,6 @@ function RecommendationCard({
             </span>
           ))}
         </div>
-        <p className="mb-5 text-xs font-medium leading-relaxed text-primary">
-          {reason}
-        </p>
         <Link
           className="mt-auto block w-full rounded-xl bg-primary py-3 text-center font-bold text-on-primary transition-all hover:bg-primary/90 active:scale-95"
           href={catalogSpacePath(space.slug)}
@@ -464,29 +468,25 @@ function TopSpacesPanel({
           <Icon className="h-4 w-4" name="star" />
           Top Spaces
         </h4>
-        <div className="space-y-4">
-          {recommendations.map(({ reason, score, space }) => (
+        <div className="divide-y divide-outline-variant">
+          {recommendations.map(({ score, space }) => (
             <Link
-              className="flex flex-col gap-1"
+              className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-4 transition-colors first:pt-1 last:pb-1 hover:bg-surface-container-lowest/60"
               href={catalogSpacePath(space.slug)}
               key={space.id}
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest text-primary shadow-sm">
-                  <Icon className="h-5 w-5" name={categoryIcon(space.category)} />
-                </div>
-                <div>
-                  <h5 className="text-sm font-bold text-on-surface">
-                    {space.name}
-                  </h5>
-                  <p className="text-[10px] font-bold uppercase text-primary">
-                    {formatScore(score)} match
-                  </p>
-                </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest text-primary shadow-sm">
+                <Icon className="h-5 w-5" name={categoryIcon(space.category)} />
               </div>
-              <p className="mt-1 text-[10px] leading-relaxed text-on-surface-variant">
-                {reason}
-              </p>
+              <div className="min-w-0 flex-1">
+                <h5 className="text-sm font-bold leading-snug text-on-surface">
+                  {space.name}
+                </h5>
+                <p className="mt-1 text-[10px] font-bold uppercase text-primary">
+                  {formatScore(score)} match
+                </p>
+              </div>
+              <Icon className="h-4 w-4 shrink-0 text-on-surface-variant" name="arrowRight" />
             </Link>
           ))}
         </div>
@@ -530,25 +530,35 @@ function CompactRecommendationCard({
   const { reason, score, space } = recommendation;
 
   return (
-    <article className="group flex h-40 items-center overflow-hidden rounded-[2rem] border border-outline-variant bg-surface-container-low p-3 shadow-sm">
-      <div className="relative h-full w-32 shrink-0 overflow-hidden rounded-2xl">
-        <SpaceImage sizes="128px" space={space} />
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-[2rem] border border-outline-variant bg-surface-container-low shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+      <div className="relative h-40 w-full shrink-0 overflow-hidden">
+        <SpaceImage
+          className="transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          space={space}
+        />
       </div>
-      <div className="flex h-full w-full flex-col justify-between px-4 py-2">
-        <div>
-          <h4 className="font-extrabold text-on-surface">{space.name}</h4>
-          <p className="line-clamp-2 text-xs text-on-surface-variant">
+      <div className="flex min-w-0 flex-1 flex-col p-5">
+        <div className="mb-4 min-w-0">
+          <p className="mb-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+            <Icon className="h-3.5 w-3.5" name={categoryIcon(space.category)} />
+            {formatLabel(space.category)}
+          </p>
+          <h4 className="break-words text-lg font-extrabold leading-snug text-on-surface">
+            {space.name}
+          </h4>
+          <p className="mt-2 break-words text-xs leading-relaxed text-on-surface-variant">
             {reason}
           </p>
         </div>
-        <div className="mt-auto flex items-center justify-between gap-3">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant pt-4">
           <span
-            className="rounded-lg bg-primary-container px-2 py-1 text-[10px] font-bold uppercase text-on-primary-container"
+            className="shrink-0 rounded-lg bg-primary-container px-2.5 py-1.5 text-[10px] font-bold uppercase text-on-primary-container"
           >
             {formatScore(score)} match
           </span>
           <Link
-            className="flex items-center gap-1 text-xs font-extrabold text-primary transition-transform group-hover:translate-x-1"
+            className="flex shrink-0 items-center gap-1 text-xs font-extrabold text-primary transition-transform group-hover:translate-x-1"
             href={catalogSpacePath(space.slug)}
           >
             View Space
@@ -590,27 +600,35 @@ function DiscoveryCard({
   const { reason, score, space } = recommendation;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-[2rem] border border-outline-variant bg-surface-container-low shadow-sm md:flex-row">
-      <div className="relative h-48 w-full shrink-0 overflow-hidden md:h-auto md:w-56">
-        <SpaceImage sizes="224px" space={space} />
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-[2rem] border border-outline-variant bg-surface-container-low shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+      <div className="relative h-52 w-full shrink-0 overflow-hidden">
+        <SpaceImage
+          className="transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          space={space}
+        />
       </div>
-      <div className="flex flex-1 flex-col justify-between p-6">
-        <div>
-          <div className="mb-2 flex items-start justify-between gap-3">
-            <h4 className="text-xl font-extrabold text-on-surface">{space.name}</h4>
-            <span className="rounded bg-tertiary/20 px-2 py-1 text-[10px] font-bold uppercase text-tertiary">
+      <div className="flex min-w-0 flex-1 flex-col p-6">
+        <div className="min-w-0">
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <h4 className="min-w-0 flex-1 break-words text-xl font-extrabold leading-snug text-on-surface">
+              {space.name}
+            </h4>
+            <span className="shrink-0 rounded-lg bg-tertiary/20 px-2.5 py-1.5 text-[10px] font-bold uppercase text-tertiary">
               {formatScore(score)} match
             </span>
           </div>
-          <p className="mb-4 text-sm text-on-surface-variant">{reason}</p>
+          <p className="break-words text-sm leading-relaxed text-on-surface-variant">
+            {reason}
+          </p>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1 text-xs font-bold text-on-surface-variant">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant pt-5">
+          <span className="flex min-w-0 items-center gap-1 text-xs font-bold text-on-surface-variant">
             <Icon className="h-4 w-4" name={categoryIcon(space.category)} />
             {formatLabel(space.category)}
           </span>
           <Link
-            className="rounded-xl bg-primary px-6 py-2 text-sm font-bold text-on-primary shadow-sm transition-transform hover:bg-primary/90 active:scale-95"
+            className="shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-sm transition-transform hover:bg-primary/90 active:scale-95"
             href={catalogSpacePath(space.slug)}
           >
             View Space
@@ -716,10 +734,10 @@ function SectionTitle({
   iconClassName?: string;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <h3 className="flex items-center gap-2 text-2xl font-bold text-on-surface">
-        <Icon className={`h-6 w-6 ${iconClassName}`} name={icon} />
-        {children}
+    <div className="flex min-w-0 items-start justify-between">
+      <h3 className="flex min-w-0 items-start gap-2 text-2xl font-bold leading-tight text-on-surface">
+        <Icon className={`mt-0.5 h-6 w-6 shrink-0 ${iconClassName}`} name={icon} />
+        <span className="min-w-0 break-words">{children}</span>
       </h3>
     </div>
   );

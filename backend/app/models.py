@@ -49,6 +49,22 @@ class User(TimestampMixin, db.Model):
         }
 
 
+class PasswordResetToken(db.Model):
+    __tablename__ = "password_reset_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token_hash = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    used_at = db.Column(db.DateTime(timezone=True))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
+
+
 class UserProfile(TimestampMixin, db.Model):
     __tablename__ = "user_profiles"
 
@@ -57,6 +73,7 @@ class UserProfile(TimestampMixin, db.Model):
         db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
     )
     home_campus = db.Column(db.String(160))
+    avatar_filename = db.Column(db.String(255))
     comfort_level = db.Column(db.String(30))
     preferred_social_intensity = db.Column(db.Integer)
     noise_tolerance = db.Column(db.String(30))
@@ -73,6 +90,7 @@ class UserProfile(TimestampMixin, db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "home_campus": self.home_campus,
+            "avatar_url": "/api/profile/avatar" if self.avatar_filename else None,
             "comfort_level": self.comfort_level,
             "preferred_social_intensity": self.preferred_social_intensity,
             "noise_tolerance": self.noise_tolerance,

@@ -27,9 +27,10 @@ Demo credentials after seeding:
 
 ## API Surface
 
-- `POST /api/auth/register`, `/login`, `/logout`
+- `POST /api/auth/register`, `/login`, `/logout`, `/forgot-password`, `/reset-password`
 - `GET /api/auth/me`
 - `GET`, `PUT /api/profile`
+- `GET`, `POST /api/profile/avatar`
 - `GET /api/spaces` and `GET /api/spaces/<id>`
 - `POST /api/recommendations` and `GET /api/recommendations/history`
 - `GET`, `POST /api/visits`
@@ -49,6 +50,11 @@ explicit location consent; precise location history is not stored.
 Visit and reflection history is private to the authenticated user. Recommendation
 ranking uses summarized ratings, return preferences, and previously visited spaces;
 reflection text is not copied into recommendation history.
+
+Password reset links expire after 30 minutes and can only be used once. Local
+development exposes the generated reset link in the response so the flow can be
+tested without an email provider. Set `EXPOSE_PASSWORD_RESET_TOKEN=false` when an
+email delivery service is connected.
 
 ## Database migrations
 

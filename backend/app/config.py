@@ -15,6 +15,9 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     JSON_SORT_KEYS = False
     FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
+    EXPOSE_PASSWORD_RESET_TOKEN = os.getenv(
+        "EXPOSE_PASSWORD_RESET_TOKEN", "true"
+    ).lower() in {"1", "true", "yes"}
     VISIT_VERIFICATION_RADIUS_METERS = float(
         os.getenv("VISIT_VERIFICATION_RADIUS_METERS", "150")
     )

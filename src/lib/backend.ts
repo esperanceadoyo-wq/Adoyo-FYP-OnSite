@@ -26,15 +26,19 @@ export async function proxyBackendRequest(
     cache: "no-store",
   });
 
-  const body = await backendResponse.text();
+  const body = await backendResponse.arrayBuffer();
   const responseHeaders = new Headers({
     "content-type":
       backendResponse.headers.get("content-type") || "application/json",
   });
   const setCookie = backendResponse.headers.get("set-cookie");
+  const cacheControl = backendResponse.headers.get("cache-control");
 
   if (setCookie) {
     responseHeaders.set("set-cookie", setCookie);
+  }
+  if (cacheControl) {
+    responseHeaders.set("cache-control", cacheControl);
   }
 
   return new Response(body, {

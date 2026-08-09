@@ -12,12 +12,13 @@ from app.seed import seed_database
 
 
 @pytest.fixture()
-def app():
+def app(tmp_path):
     application = create_app(
         {
             "TESTING": True,
             "SECRET_KEY": "test-key",
             "SQLALCHEMY_DATABASE_URI": "sqlite://",
+            "AVATAR_UPLOAD_DIRECTORY": str(tmp_path / "avatars"),
         }
     )
     with application.app_context():

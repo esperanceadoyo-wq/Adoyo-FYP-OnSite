@@ -3,6 +3,7 @@ import { getBackendUrl } from "@/lib/backend";
 import type { SpaceRecommendation } from "@/lib/recommendations";
 
 export type UserProfile = {
+  avatar_url: string | null;
   comfort_level: string | null;
   current_mood: string | null;
   home_campus: string | null;

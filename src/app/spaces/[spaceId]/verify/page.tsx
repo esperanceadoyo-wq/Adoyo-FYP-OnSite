@@ -50,10 +50,10 @@ export default async function VisitVerificationPage({
   const reflectionQuery = new URLSearchParams({ visitId: String(visit.id) });
 
   return (
-    <main className="flex min-h-[max(884px,100dvh)] flex-col overflow-hidden bg-[#0F172A] text-white antialiased">
+    <main className="flex min-h-[max(884px,100dvh)] flex-col overflow-hidden bg-background text-on-background antialiased">
       <header className="flex w-full items-center px-6 pb-4 pt-12">
         <Link
-          className="flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700 active:scale-95"
+          className="flex items-center gap-2 rounded-full bg-surface-container-high px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-highest active:scale-95"
           href={catalogSpacePath(space.slug)}
         >
           <span className="material-symbols-outlined text-lg">arrow_back</span>
@@ -77,15 +77,15 @@ export default async function VisitVerificationPage({
                 />
                 <circle cx="40" cy="35" fill="#0F172A" r="6" />
               </svg>
-              <div className="absolute right-1 top-1 h-5 w-5 rounded-full border-2 border-[#0F172A] bg-primary" />
+              <div className="absolute right-1 top-1 h-5 w-5 rounded-full border-2 border-background bg-primary" />
             </div>
           </div>
-          <h1 className="px-4 text-3xl font-extrabold leading-tight tracking-tight text-white">
+          <h1 className="px-4 text-3xl font-extrabold leading-tight tracking-tight text-on-surface">
             You&apos;re here!
             <br />
             Reflection unlocked.
           </h1>
-          <p className="px-8 text-sm font-medium leading-relaxed text-slate-400 opacity-80">
+          <p className="px-8 text-sm font-medium leading-relaxed text-on-surface-variant opacity-80">
             Your location reading was accepted for {space.name}. Precise
             coordinates were not stored.
           </p>
@@ -129,7 +129,7 @@ export default async function VisitVerificationPage({
               arrow_forward
             </span>
           </Link>
-          <p className="mt-6 px-10 text-center text-xs font-medium leading-relaxed text-slate-500">
+          <p className="mt-6 px-10 text-center text-xs font-medium leading-relaxed text-on-surface-variant">
             Visit #{visit.id} was recorded using one-time location verification.
           </p>
         </section>
@@ -146,13 +146,13 @@ function CheckInRequired({
   spaceSlug: string;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0F172A] px-6 text-white">
+    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-on-background">
       <section className="w-full max-w-md text-center">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-800 text-primary">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-surface-container-high text-primary">
           <span className="material-symbols-outlined text-4xl">location_off</span>
         </div>
         <h1 className="mt-6 text-3xl font-extrabold">Check-in required</h1>
-        <p className="mt-3 leading-relaxed text-slate-400">
+        <p className="mt-3 leading-relaxed text-on-surface-variant">
           Complete location verification at {spaceName} before opening the visit
           confirmation.
         </p>
@@ -198,7 +198,7 @@ function SensorCard({
   value: string;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-slate-700/50 bg-[#1E293B] p-4">
+    <div className="flex items-center justify-between rounded-2xl border border-outline-variant bg-surface-container-low p-4">
       <div className="flex items-center gap-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
           <span className="material-symbols-outlined text-xl text-primary">
@@ -206,10 +206,10 @@ function SensorCard({
           </span>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
             {label}
           </p>
-          <p className="text-base font-semibold text-white">{value}</p>
+          <p className="text-base font-semibold text-on-surface">{value}</p>
         </div>
       </div>
       <div className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">

@@ -14,7 +14,7 @@ export default async function Page() {
       <>
       <div className={"fixed inset-0 z-[-1] overflow-hidden"}>
 
-        <div className={"absolute inset-0 bg-slate-950/80 backdrop-blur-[2px]"}></div>
+        <div className={"absolute inset-0 bg-background/80 backdrop-blur-[2px]"}></div>
 
       </div>
       <main className={"flex-grow flex items-center justify-center px-4 pb-12 py-12"}>
@@ -56,7 +56,7 @@ export default async function Page() {
 
                   <div className={"selection-card group cursor-pointer border-2 border-transparent bg-surface-variant/40 rounded-xl p-4 transition-all duration-200 hover:bg-surface-variant/60"} data-category={"interests"} data-value={"study"} data-selection={"toggle"}>
 
-                    <div className={"w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform"}>
+                    <div className={"w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform"}>
 
                       <span className={"material-symbols-outlined text-primary"}>menu_book</span>
 
@@ -70,7 +70,7 @@ export default async function Page() {
 
                   <div className={"selection-card group cursor-pointer border-2 border-transparent bg-surface-variant/40 rounded-xl p-4 transition-all duration-200 hover:bg-surface-variant/60"} data-category={"interests"} data-value={"social"} data-selection={"toggle"}>
 
-                    <div className={"w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform"}>
+                    <div className={"w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform"}>
 
                       <span className={"material-symbols-outlined text-primary"}>groups</span>
 
@@ -84,7 +84,7 @@ export default async function Page() {
 
                   <div className={"selection-card group cursor-pointer border-2 border-transparent bg-surface-variant/40 rounded-xl p-4 transition-all duration-200 hover:bg-surface-variant/60"} data-category={"interests"} data-value={"collaborative"} data-selection={"toggle"}>
 
-                    <div className={"w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform"}>
+                    <div className={"w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform"}>
 
                       <span className={"material-symbols-outlined text-primary"}>handshake</span>
 

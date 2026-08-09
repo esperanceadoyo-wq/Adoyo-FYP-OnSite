@@ -253,7 +253,7 @@ function InspirationPanel() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#0B1120] via-[#0B1120]/60 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
           <div className="mb-8 h-1 w-12 rounded-full bg-[#22D3EE]" />
-          <h3 className="mb-4 max-w-2xl text-2xl font-light italic leading-snug tracking-tight text-white md:text-4xl">
+          <h3 className="theme-keep-white mb-4 max-w-2xl text-2xl font-light italic leading-snug tracking-tight text-white md:text-4xl">
             &quot;Every new place is an opportunity to learn, connect, and grow.&quot;
           </h3>
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-400/80">

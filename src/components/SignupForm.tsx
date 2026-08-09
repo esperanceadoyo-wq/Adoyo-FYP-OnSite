@@ -27,6 +27,8 @@ const initialFields: SignupFields = {
 export function SignupForm() {
   const router = useRouter();
   const [fields, setFields] = useState(initialFields);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -132,16 +134,29 @@ export function SignupForm() {
         <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
           Password
         </label>
-        <input
-          autoComplete="new-password"
-          className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
-          name="password"
-          onChange={(event) => updateField("password", event.target.value)}
-          placeholder="Create a password"
-          required
-          type="password"
-          value={fields.password}
-        />
+        <div className="relative flex items-center">
+          <input
+            autoComplete="new-password"
+            className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-12 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+            name="password"
+            onChange={(event) => updateField("password", event.target.value)}
+            placeholder="Create a password"
+            required
+            type={showPassword ? "text" : "password"}
+            value={fields.password}
+          />
+          <button
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
+            className="absolute right-3 text-slate-400 transition-colors hover:text-primary dark:text-slate-500"
+            onClick={() => setShowPassword((current) => !current)}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-xl">
+              {showPassword ? "visibility_off" : "visibility"}
+            </span>
+          </button>
+        </div>
         <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
           {passwordRules.map((rule) => {
             const passed = rule.test(fields.password);
@@ -164,18 +179,35 @@ export function SignupForm() {
         <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
           Confirm Password
         </label>
-        <input
-          autoComplete="new-password"
-          className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
-          name="confirm_password"
-          onChange={(event) =>
-            updateField("confirmPassword", event.target.value)
-          }
-          placeholder="Confirm your password"
-          required
-          type="password"
-          value={fields.confirmPassword}
-        />
+        <div className="relative flex items-center">
+          <input
+            autoComplete="new-password"
+            className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-12 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+            name="confirm_password"
+            onChange={(event) =>
+              updateField("confirmPassword", event.target.value)
+            }
+            placeholder="Confirm your password"
+            required
+            type={showConfirmPassword ? "text" : "password"}
+            value={fields.confirmPassword}
+          />
+          <button
+            aria-label={
+              showConfirmPassword
+                ? "Hide confirmed password"
+                : "Show confirmed password"
+            }
+            aria-pressed={showConfirmPassword}
+            className="absolute right-3 text-slate-400 transition-colors hover:text-primary dark:text-slate-500"
+            onClick={() => setShowConfirmPassword((current) => !current)}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-xl">
+              {showConfirmPassword ? "visibility_off" : "visibility"}
+            </span>
+          </button>
+        </div>
         {!passwordsMatch ? (
           <p className="mt-1 text-xs font-medium text-red-500">
             Passwords must match.

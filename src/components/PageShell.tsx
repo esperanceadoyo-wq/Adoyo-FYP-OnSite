@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { MouseEvent, ReactNode } from "react";
+import { toggleTheme } from "@/lib/theme";
 
 type PageShellProps = {
   bodyClassName: string;
@@ -38,8 +39,7 @@ export function PageShell({ bodyClassName, children }: PageShellProps) {
     if (!target) return;
 
     if (target.closest("#theme-toggle-btn")) {
-      const isDark = document.documentElement.classList.toggle("dark");
-      localStorage.setItem("theme", isDark ? "dark" : "light");
+      toggleTheme();
       return;
     }
 

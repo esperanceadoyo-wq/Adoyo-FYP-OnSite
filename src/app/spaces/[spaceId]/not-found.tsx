@@ -2,13 +2,13 @@ import Link from "next/link";
 
 export default function SpaceNotFound() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0F172A] px-6 text-center text-white">
+    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-center text-on-background">
       <section className="max-w-md">
         <span className="material-symbols-outlined text-6xl text-primary">
           wrong_location
         </span>
         <h1 className="mt-5 text-3xl font-extrabold">Space not found</h1>
-        <p className="mt-3 text-sm leading-relaxed text-slate-400">
+        <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
           This space is unavailable or is no longer part of the active catalog.
         </p>
         <Link

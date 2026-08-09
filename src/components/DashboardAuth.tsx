@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getInitials, type AuthUser } from "@/lib/auth";
+import { UserAvatar } from "@/components/UserAvatar";
+import type { AuthUser } from "@/lib/auth";
 import type { UserProgress } from "@/lib/dashboard-data";
 
 export function DashboardAuthPanel({
@@ -14,7 +15,6 @@ export function DashboardAuthPanel({
 }) {
   return (
     <UserPanelShell
-      initials={getInitials(user.name)}
       name={user.name}
       progress={progress}
     />
@@ -62,11 +62,9 @@ export function LogoutButton({
 }
 
 function UserPanelShell({
-  initials,
   name,
   progress,
 }: {
-  initials: string;
   name: string;
   progress: UserProgress | null;
 }) {
@@ -77,9 +75,11 @@ function UserPanelShell({
 
   return (
     <div className="flex items-center gap-5 rounded-[2rem] border border-outline-variant bg-surface-container-low p-6 shadow-sm lg:col-span-4">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-container text-2xl font-extrabold text-on-primary-container">
-        {initials}
-      </div>
+      <UserAvatar
+        className="h-16 w-16 rounded-2xl text-2xl text-on-primary-container"
+        name={name}
+        sizes="64px"
+      />
       <div className="flex-1">
         <div className="mb-1 flex items-end justify-between">
           <span className="font-bold text-on-surface">{name}</span>

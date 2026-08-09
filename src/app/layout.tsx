@@ -16,8 +16,12 @@ const themeScript = `
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
       document.documentElement.classList.add('dark');
+      document.documentElement.dataset.theme = 'dark';
+      document.documentElement.style.colorScheme = 'dark';
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.dataset.theme = 'light';
+      document.documentElement.style.colorScheme = 'light';
     }
   } catch (_) {}
 `;
@@ -29,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className="scroll-smooth transition-colors duration-300 bg-white dark:bg-slate-900"
+      className="scroll-smooth bg-background text-on-background transition-colors duration-300"
       lang="en"
       suppressHydrationWarning
     >

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { AppChrome } from "@/components/AppChrome";
-import { getInitials } from "@/lib/auth";
+import { UserAvatar } from "@/components/UserAvatar";
 import {
   getDashboardData,
   type AchievementProgress,
@@ -52,11 +52,11 @@ export default async function ProfilePage() {
           <section className="rounded-xl border border-[#1E293B] bg-[#161E2E] p-6 shadow-[0_0_20px_rgba(34,211,238,0.06)]">
             <div className="flex flex-col items-center gap-6 md:flex-row">
               <div className="relative">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-[#22D3EE]/30 bg-[#22D3EE]/10">
-                  <span className="text-2xl font-bold text-[#22D3EE]">
-                    {getInitials(user.name)}
-                  </span>
-                </div>
+                <UserAvatar
+                  className="h-24 w-24 rounded-full border-2 border-[#22D3EE]/30 text-2xl text-[#22D3EE]"
+                  name={user.name}
+                  sizes="96px"
+                />
                 <div className="absolute -bottom-1 -right-1 rounded-full bg-[#22D3EE] px-2 py-0.5 text-[10px] font-bold text-[#0B1120]">
                   LVL {level}
                 </div>

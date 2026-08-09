@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogoutButton } from "@/components/DashboardAuth";
-import { getInitials, type AuthUser } from "@/lib/auth";
+import { UserAvatar } from "@/components/UserAvatar";
+import type { AuthUser } from "@/lib/auth";
 import type { UserProgress } from "@/lib/dashboard-data";
 
 export type AppIconName =
@@ -47,7 +48,7 @@ export function AppChrome({
   user: AuthUser;
 }) {
   return (
-    <main className="min-h-screen bg-background pb-24 text-on-background md:pb-8">
+    <main className="app-theme min-h-screen bg-background pb-24 text-on-background md:pb-8">
       <AppSidebar activeHref={activeHref} />
       <section className="md:ml-64">
         <AppHeader progress={progress} user={user} />
@@ -172,12 +173,15 @@ function AppHeader({
           <AppIcon className="h-5 w-5" name="notification" />
         </Link>
         <Link
-          className="h-10 w-10 overflow-hidden rounded-full border-2 border-primary transition-transform active:scale-95"
+          aria-label="View profile"
+          className="rounded-full border-2 border-primary transition-transform active:scale-95"
           href="/profile"
         >
-          <span className="flex h-full w-full items-center justify-center bg-surface-variant text-on-surface-variant">
-            <span className="text-xs font-extrabold">{getInitials(user.name)}</span>
-          </span>
+          <UserAvatar
+            className="h-9 w-9 rounded-full text-xs"
+            name={user.name}
+            sizes="36px"
+          />
         </Link>
       </div>
     </header>

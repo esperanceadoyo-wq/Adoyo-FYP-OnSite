@@ -68,9 +68,17 @@ export function LoginForm() {
       </div>
 
       <div className="flex w-full flex-col">
-        <label className="ml-1 pb-2 text-sm font-semibold leading-normal text-slate-700 dark:text-slate-300">
-          Password
-        </label>
+        <div className="flex items-center justify-between pb-2">
+          <label className="ml-1 text-sm font-semibold leading-normal text-slate-700 dark:text-slate-300">
+            Password
+          </label>
+          <a
+            className="text-sm font-semibold text-primary hover:underline"
+            href="/forgot-password"
+          >
+            Forgot password?
+          </a>
+        </div>
         <div className="relative flex w-full items-center">
           <input
             autoComplete="current-password"
@@ -87,6 +95,7 @@ export function LoginForm() {
           />
           <button
             aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
             className="absolute right-4 text-slate-400 transition-colors hover:text-primary dark:text-slate-500"
             onClick={() => setShowPassword((current) => !current)}
             type="button"

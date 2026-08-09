@@ -1,4 +1,6 @@
+import base64
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 
 from app.extensions import db
 from app.models import Reflection, Space, User, Visit
@@ -126,6 +128,47 @@ def test_register_rejects_weak_password(client):
     assert "Password" in response.get_json()["error"]
 
 
+def test_password_reset_updates_credentials_and_token_is_single_use(client):
+    request_response = client.post(
+        "/api/auth/forgot-password", json={"email": "demo@onsite.local"}
+    )
+    reset_path = request_response.get_json()["reset_path"]
+    token = reset_path.split("token=", maxsplit=1)[1]
+
+    reset_response = client.post(
+        "/api/auth/reset-password",
+        json={"password": "NewDemoPass456!", "token": token},
+    )
+    reused_response = client.post(
+        "/api/auth/reset-password",
+        json={"password": "AnotherPass789!", "token": token},
+    )
+    old_login = client.post(
+        "/api/auth/login",
+        json={"email": "demo@onsite.local", "password": "DemoPass123!"},
+    )
+    new_login = client.post(
+        "/api/auth/login",
+        json={"email": "demo@onsite.local", "password": "NewDemoPass456!"},
+    )
+
+    assert request_response.status_code == 200
+    assert reset_response.status_code == 200
+    assert reused_response.status_code == 400
+    assert old_login.status_code == 401
+    assert new_login.status_code == 200
+
+
+def test_forgot_password_does_not_reveal_unknown_accounts(client):
+    response = client.post(
+        "/api/auth/forgot-password", json={"email": "unknown@example.edu"}
+    )
+
+    assert response.status_code == 200
+    assert "reset_path" not in response.get_json()
+    assert "If an account matches" in response.get_json()["message"]
+
+
 def test_protected_routes_require_authentication(client):
     response = client.get("/api/profile")
 
@@ -178,6 +221,37 @@ def test_profile_rejects_unknown_onboarding_values(authenticated_client):
 
     assert response.status_code == 400
     assert "comfort_level must be one of" in response.get_json()["error"]
+
+
+def test_profile_avatar_upload_and_fetch(authenticated_client):
+    png_bytes = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+    )
+    upload = authenticated_client.post(
+        "/api/profile/avatar",
+        data={"avatar": (BytesIO(png_bytes), "profile.png")},
+        content_type="multipart/form-data",
+    )
+    profile = authenticated_client.get("/api/profile").get_json()["profile"]
+    avatar = authenticated_client.get("/api/profile/avatar")
+
+    assert upload.status_code == 200
+    assert upload.get_json()["avatar_url"] == "/api/profile/avatar"
+    assert profile["avatar_url"] == "/api/profile/avatar"
+    assert avatar.status_code == 200
+    assert avatar.content_type == "image/webp"
+    assert avatar.data.startswith(b"RIFF")
+
+
+def test_profile_avatar_rejects_non_image_files(authenticated_client):
+    response = authenticated_client.post(
+        "/api/profile/avatar",
+        data={"avatar": (BytesIO(b"not an image"), "profile.png")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "The selected file is not a valid image."
 
 
 def test_profile_allows_clearing_preferences_and_preserves_campus_name(

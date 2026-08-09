@@ -108,7 +108,7 @@ export function ReflectionForm({
       <div className="grid gap-10 lg:grid-cols-2">
         <div className="space-y-8">
           <div>
-            <h1 className="pb-1 text-3xl font-bold leading-tight tracking-tight text-white">
+            <h1 className="pb-1 text-3xl font-bold leading-tight tracking-tight text-on-surface">
               Post-Visit Reflection
             </h1>
             <p className="text-base font-normal leading-normal text-[#94A3B8]">
@@ -121,7 +121,7 @@ export function ReflectionForm({
               Your Thoughts
             </p>
             <textarea
-              className="min-h-[140px] w-full resize-none rounded-xl border border-[#1E293B] bg-[#0B1120] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
+              className="min-h-[140px] w-full resize-none rounded-xl border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary"
               maxLength={5000}
               onChange={(event) => setThoughts(event.target.value)}
               placeholder="What did you like or dislike about this space?"
@@ -135,7 +135,7 @@ export function ReflectionForm({
                 {activePrompt}
               </p>
               <textarea
-                className="min-h-[100px] w-full resize-none rounded-xl border border-[#1E293B] bg-[#0B1120] p-4 text-sm text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
+                className="min-h-[100px] w-full resize-none rounded-xl border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary"
                 onChange={(event) => setFollowUp(event.target.value)}
                 placeholder="Type your answer here..."
                 value={followUp}
@@ -158,7 +158,7 @@ export function ReflectionForm({
             selected={vibe}
           />
 
-          <div className="space-y-4 rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
+          <div className="space-y-4 rounded-xl border border-outline-variant bg-surface-container-low p-5">
             <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
               Quick Tags
             </p>
@@ -203,7 +203,7 @@ function SelectionGroup({
   selected: string;
 }) {
   return (
-    <div className="space-y-4 rounded-xl border border-[#1E293B] bg-[#161E2E] p-5">
+    <div className="space-y-4 rounded-xl border border-outline-variant bg-surface-container-low p-5">
       <p className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8]">
         {label}
       </p>
@@ -236,7 +236,7 @@ function PillButton({
       className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${
         active
           ? "border-[#22D3EE] bg-[#22D3EE] text-[#0B1120] shadow-[0_0_12px_rgba(34,211,238,0.3)]"
-          : "border-transparent bg-[#1E293B] text-white hover:bg-[#334155]"
+          : "border-transparent bg-surface-container-high text-on-surface hover:bg-surface-container-highest"
       }`}
       onClick={onClick}
       type="button"

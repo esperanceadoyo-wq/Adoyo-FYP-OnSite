@@ -24,7 +24,7 @@ export default async function SpaceDetailsPage({ params }: SpaceRouteProps) {
   const space = await requireSpace(spaceId);
 
   return (
-    <main className="min-h-screen bg-[#0F172A] text-on-surface">
+    <main className="min-h-screen bg-background text-on-surface">
       <FlowHeader />
       <div className="mx-auto max-w-6xl p-8 pt-24">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
@@ -91,7 +91,7 @@ export default async function SpaceDetailsPage({ params }: SpaceRouteProps) {
                 About this space
                 <span className="h-px flex-grow bg-outline/30" />
               </h2>
-              <div className="rounded-2xl border border-outline/20 bg-[#1E293B] p-8">
+              <div className="rounded-2xl border border-outline/20 bg-surface-container-low p-8">
                 <p className="text-lg leading-relaxed text-on-surface-variant">
                   {space.description}
                 </p>
@@ -122,7 +122,7 @@ export default async function SpaceDetailsPage({ params }: SpaceRouteProps) {
               <h2 className="mb-8 text-2xl font-bold text-on-surface">
                 Space Details
               </h2>
-              <div className="space-y-8 rounded-3xl border border-outline/10 bg-[#1E293B] p-8">
+              <div className="space-y-8 rounded-3xl border border-outline/10 bg-surface-container-low p-8">
                 <PillGroup
                   accent="primary"
                   items={[
@@ -162,7 +162,7 @@ export default async function SpaceDetailsPage({ params }: SpaceRouteProps) {
             </section>
 
             <section>
-              <div className="space-y-6 rounded-3xl border border-outline/20 bg-[#1E293B] p-8">
+              <div className="space-y-6 rounded-3xl border border-outline/20 bg-surface-container-low p-8">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/70">
                   Community Highlights
                 </h3>
@@ -206,7 +206,7 @@ function GuidanceCard({
   value: string;
 }) {
   return (
-    <article className="rounded-2xl border border-outline/20 bg-[#1E293B] p-5">
+    <article className="rounded-2xl border border-outline/20 bg-surface-container-low p-5">
       <div className="mb-2 flex items-center gap-2 text-sm font-bold text-primary">
         <span className="material-symbols-outlined text-xl">{icon}</span>
         {label}
@@ -345,7 +345,7 @@ function Pill({
       ? "border-primary/20 bg-primary-container text-on-primary-container"
       : accent === "tertiary"
         ? "border-tertiary/20 bg-tertiary-container text-on-tertiary-container"
-        : "border-transparent bg-[#0B1120] text-white";
+        : "border-transparent bg-surface-container-high text-on-surface";
   const shapeClassName =
     accent === "neutral"
       ? "rounded-[1.125rem] px-7 py-3 text-sm"

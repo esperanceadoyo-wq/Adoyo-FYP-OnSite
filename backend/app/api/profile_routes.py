@@ -1,4 +1,9 @@
-from flask import Blueprint, g, jsonify, request
+from io import BytesIO
+from pathlib import Path
+import secrets
+
+from flask import Blueprint, current_app, g, jsonify, request, send_file
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from ..auth import login_required
 from ..extensions import db
@@ -24,6 +29,8 @@ LIST_FIELDS = {
     "preferred_space_types",
     "preferred_amenities",
 }
+MAX_AVATAR_BYTES = 5 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 def _current_profile() -> UserProfile:
@@ -91,3 +98,69 @@ def update_profile():
 
     db.session.commit()
     return jsonify({"profile": profile.to_dict()})
+
+
+@profile_bp.get("/avatar")
+@login_required
+def get_avatar():
+    profile = _current_profile()
+    if not profile.avatar_filename:
+        return jsonify({"error": "Profile picture not found."}), 404
+
+    avatar_path = _avatar_directory() / profile.avatar_filename
+    if not avatar_path.is_file():
+        return jsonify({"error": "Profile picture not found."}), 404
+
+    response = send_file(avatar_path, mimetype="image/webp", conditional=True)
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
+
+
+@profile_bp.post("/avatar")
+@login_required
+def upload_avatar():
+    upload = request.files.get("avatar")
+    if upload is None or not upload.filename:
+        return jsonify({"error": "Choose an image to upload."}), 400
+    if upload.mimetype not in ALLOWED_AVATAR_TYPES:
+        return jsonify({"error": "Use a JPG, PNG, or WebP image."}), 400
+
+    image_bytes = upload.stream.read(MAX_AVATAR_BYTES + 1)
+    if len(image_bytes) > MAX_AVATAR_BYTES:
+        return jsonify({"error": "Profile pictures must be 5 MB or smaller."}), 413
+
+    try:
+        with Image.open(BytesIO(image_bytes)) as source_image:
+            source_image.verify()
+        with Image.open(BytesIO(image_bytes)) as source_image:
+            normalized = ImageOps.exif_transpose(source_image)
+            normalized.thumbnail((512, 512), Image.Resampling.LANCZOS)
+            if normalized.mode not in {"RGB", "RGBA"}:
+                normalized = normalized.convert("RGBA")
+            output = BytesIO()
+            normalized.save(output, format="WEBP", quality=88, method=6)
+    except (OSError, UnidentifiedImageError, ValueError):
+        return jsonify({"error": "The selected file is not a valid image."}), 400
+
+    profile = _current_profile()
+    avatar_directory = _avatar_directory()
+    avatar_directory.mkdir(parents=True, exist_ok=True)
+    previous_filename = profile.avatar_filename
+    filename = f"user-{g.current_user.id}-{secrets.token_hex(8)}.webp"
+    (avatar_directory / filename).write_bytes(output.getvalue())
+    profile.avatar_filename = filename
+    db.session.commit()
+
+    if previous_filename and previous_filename != filename:
+        previous_path = avatar_directory / previous_filename
+        if previous_path.is_file():
+            previous_path.unlink()
+
+    return jsonify({"avatar_url": "/api/profile/avatar"})
+
+
+def _avatar_directory() -> Path:
+    configured_directory = current_app.config.get("AVATAR_UPLOAD_DIRECTORY")
+    if configured_directory:
+        return Path(configured_directory)
+    return Path(current_app.instance_path) / "avatars"
