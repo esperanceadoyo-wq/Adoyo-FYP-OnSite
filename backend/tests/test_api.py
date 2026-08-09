@@ -547,6 +547,120 @@ def test_student_cannot_manage_spaces(authenticated_client):
     assert response.get_json()["error"] == "Administrator access required."
 
 
+def test_admin_overview_requires_admin(app, authenticated_client):
+    anonymous_response = app.test_client().get("/api/admin/overview")
+    student_response = authenticated_client.get("/api/admin/overview")
+
+    assert anonymous_response.status_code == 401
+    assert student_response.status_code == 403
+    assert student_response.get_json()["error"] == (
+        "Administrator access required."
+    )
+
+
+def test_admin_overview_aggregates_locations_and_recent_reflections(
+    authenticated_client, admin_client
+):
+    space, visit = _create_verified_visit(authenticated_client)
+    reflection_response = authenticated_client.post(
+        "/api/reflections",
+        json={
+            "comfort_rating": 5,
+            "learning_value_rating": 4,
+            "reflection_text": "A useful admin overview reflection.",
+            "social_rating": 3,
+            "space_id": space["id"],
+            "visit_id": visit["id"],
+            "would_return": True,
+        },
+    )
+    inactive_space = authenticated_client.get("/api/spaces").get_json()["spaces"][0]
+    deactivated = admin_client.delete(f"/api/spaces/{inactive_space['id']}")
+    response = admin_client.get("/api/admin/overview")
+    data = response.get_json()
+    target = next(
+        item for item in data["locations"] if item["space"]["id"] == space["id"]
+    )
+    inactive = next(
+        item
+        for item in data["locations"]
+        if item["space"]["id"] == inactive_space["id"]
+    )
+
+    assert reflection_response.status_code == 201
+    assert deactivated.status_code == 200
+    assert response.status_code == 200
+    assert data["stats"]["total_locations"] == 9
+    assert data["stats"]["active_locations"] == 8
+    assert data["stats"]["total_visits"] == 1
+    assert data["stats"]["total_reflections"] == 1
+    assert target["visits"] == 1
+    assert target["reflections"] == 1
+    assert inactive["space"]["is_active"] is False
+    assert data["recent_reflections"][0]["reflection_text"] == (
+        "A useful admin overview reflection."
+    )
+    assert data["recent_reflections"][0]["user"]["name"] == "Christine Explorer"
+
+
+def test_admin_can_create_update_deactivate_and_reactivate_space(admin_client):
+    invalid_create = admin_client.post(
+        "/api/spaces",
+        json={
+            "address": "Campus",
+            "category": "library",
+            "description": "Invalid name type.",
+            "name": ["Invalid"],
+        },
+    )
+    created = admin_client.post(
+        "/api/spaces",
+        json={
+            "address": "1 Integration Way",
+            "amenities": ["wifi", "wifi", "outlets"],
+            "category": "COMMUNITY",
+            "description": "Created through the admin API.",
+            "name": "Admin Integration Space",
+            "noise_level": "hum",
+            "opening_hours": {"daily": "08:00 - 20:00"},
+            "social_intensity": 2,
+        },
+    )
+    space = created.get_json()["space"]
+    updated = admin_client.patch(
+        f"/api/spaces/{space['id']}",
+        json={"name": "Updated Admin Space", "social_intensity": 3},
+    )
+    invalid_update = admin_client.patch(
+        f"/api/spaces/{space['id']}", json={"latitude": 120}
+    )
+    deactivated = admin_client.delete(f"/api/spaces/{space['id']}")
+    hidden_detail = admin_client.get(f"/api/spaces/{space['slug']}")
+    overview = admin_client.get("/api/admin/overview").get_json()
+    overview_space = next(
+        item
+        for item in overview["locations"]
+        if item["space"]["id"] == space["id"]
+    )
+    reactivated = admin_client.patch(
+        f"/api/spaces/{space['id']}", json={"is_active": True}
+    )
+    restored_detail = admin_client.get(f"/api/spaces/{space['slug']}")
+
+    assert invalid_create.status_code == 400
+    assert created.status_code == 201
+    assert space["category"] == "community"
+    assert space["amenities"] == ["wifi", "outlets"]
+    assert updated.status_code == 200
+    assert updated.get_json()["space"]["name"] == "Updated Admin Space"
+    assert invalid_update.status_code == 400
+    assert deactivated.status_code == 200
+    assert hidden_detail.status_code == 404
+    assert overview_space["space"]["is_active"] is False
+    assert reactivated.status_code == 200
+    assert restored_detail.status_code == 200
+
+
 def test_onboarding_profile_contract_does_not_infer_uncollected_fields(
     authenticated_client,
 ):

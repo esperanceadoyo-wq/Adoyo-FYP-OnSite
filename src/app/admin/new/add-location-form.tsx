@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const chipGroups = [
@@ -28,7 +29,9 @@ const chipGroups = [
 ];
 
 export function AddLocationForm() {
+  const router = useRouter();
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleChip(group: string, option: string) {
     const key = `${group}:${option}`;
@@ -41,6 +44,54 @@ export function AddLocationForm() {
       }
       return nextChips;
     });
+  }
+
+  async function submitLocation(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") || "").trim();
+    const address = String(form.get("address") || "").trim();
+    const description = String(form.get("description") || "").trim();
+    const openingTime = String(form.get("opening_time") || "");
+    const closingTime = String(form.get("closing_time") || "");
+    const interests = selectedOptions(activeChips, "Interests");
+    const moods = selectedOptions(activeChips, "Current Mood");
+    const comfort = selectedOptions(activeChips, "Comfort Level")[0];
+    const noise = selectedOptions(activeChips, "Noise Tolerance")[0];
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/spaces", {
+        body: JSON.stringify({
+          address,
+          amenities: selectedOptions(activeChips, "Amenities").map(amenityValue),
+          atmosphere_tags: [...interests, ...moods].map((value) => value.toLowerCase()),
+          category: categoryValue(interests),
+          description,
+          name,
+          noise_level: noiseValue(noise),
+          opening_hours:
+            openingTime && closingTime
+              ? { daily: `${openingTime} - ${closingTime}` }
+              : {},
+          social_intensity: socialIntensityValue(comfort),
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        window.alert(data.error || "This location could not be created.");
+        return;
+      }
+      window.alert("Location created successfully.");
+      router.push("/admin");
+      router.refresh();
+    } catch {
+      window.alert("Could not reach the backend. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -76,14 +127,16 @@ export function AddLocationForm() {
             </div>
           </div>
 
-          <form className="space-y-10 p-8" onSubmit={(event) => event.preventDefault()}>
+          <form className="space-y-10 p-8" onSubmit={submitLocation}>
             <section>
               <SectionHeader icon="info" title="Basic Information" />
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Field label="Space Name">
                   <input
                     className={inputClassName}
+                    name="name"
                     placeholder="e.g., The Zenith Lounge"
+                    required
                     type="text"
                   />
                 </Field>
@@ -94,16 +147,18 @@ export function AddLocationForm() {
                     </span>
                     <input
                       className={`${inputClassName} pl-10`}
+                      name="address"
                       placeholder="Enter full address"
+                      required
                       type="text"
                     />
                   </div>
                 </Field>
                 <Field label="Opening Time">
-                  <input className={inputClassName} type="time" />
+                  <input className={inputClassName} name="opening_time" type="time" />
                 </Field>
                 <Field label="Closing Time">
-                  <input className={inputClassName} type="time" />
+                  <input className={inputClassName} name="closing_time" type="time" />
                 </Field>
               </div>
             </section>
@@ -112,7 +167,9 @@ export function AddLocationForm() {
               <SectionHeader icon="description" title="About the Space" />
               <textarea
                 className={`${inputClassName} min-h-28 resize-none`}
+                name="description"
                 placeholder="Describe the ambiance, unique features, and the community vibe..."
+                required
                 rows={4}
               />
             </section>
@@ -163,10 +220,11 @@ export function AddLocationForm() {
               </p>
               <button
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#22D3EE] px-10 py-4 font-bold text-[#0B1120] shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all hover:shadow-[0_0_30px_rgba(34,211,238,0.4)] active:scale-95 md:w-auto"
+                disabled={isSubmitting}
                 type="submit"
               >
                 <span className="material-symbols-outlined">add_circle</span>
-                Add Space
+                {isSubmitting ? "Adding Space..." : "Add Space"}
               </button>
             </div>
           </form>
@@ -174,6 +232,38 @@ export function AddLocationForm() {
       </section>
     </div>
   );
+}
+
+function selectedOptions(chips: Set<string>, group: string) {
+  const prefix = `${group}:`;
+  return [...chips]
+    .filter((chip) => chip.startsWith(prefix))
+    .map((chip) => chip.slice(prefix.length));
+}
+
+function categoryValue(interests: string[]) {
+  if (interests.includes("Study")) return "library";
+  if (interests.includes("Collaborative")) return "coworking";
+  if (interests.includes("Social")) return "cafe";
+  return "community";
+}
+
+function socialIntensityValue(comfort?: string) {
+  if (comfort === "Private") return 1;
+  if (comfort === "Public") return 3;
+  return 2;
+}
+
+function noiseValue(noise?: string) {
+  if (noise === "Pin-drop Silence") return "silent";
+  if (noise === "Lively/Noisy") return "lively";
+  return "hum";
+}
+
+function amenityValue(amenity: string) {
+  if (amenity === "Strong Wifi") return "wifi";
+  if (amenity === "Power Outlets") return "outlets";
+  return "food";
 }
 
 const inputClassName =

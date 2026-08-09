@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { AppChrome } from "@/components/AppChrome";
+import { getAdminOverview } from "@/lib/admin";
 import { getDashboardData } from "@/lib/dashboard-data";
-import { requireAuth } from "@/lib/server-auth";
+import { requireAdmin } from "@/lib/server-auth";
+import { AdminLocationsTable } from "./admin-locations-table";
 
 export const metadata: Metadata = {
   title: "Admin Panel - Locations Management | OnSite",
@@ -16,99 +17,51 @@ type StatCard = {
   badge: string;
 };
 
-type LocationRow = {
-  category: string;
-  id: string;
-  image?: string;
-  name: string;
-  reflections: string;
-  status: "Active" | "Offline";
-  visits: string;
-};
-
 type Reflection = {
   borderClassName: string;
   detail: string;
+  id: number;
   quote: string;
   time: string;
 };
 
-const stats: StatCard[] = [
-  {
-    badge: "+12%",
-    icon: "map",
-    label: "Total Managed Locations",
-    value: "3",
-  },
-  {
-    badge: "+24k",
-    icon: "group",
-    label: "Total Visits (Global)",
-    value: "42",
-  },
-  {
-    badge: "New Record",
-    icon: "auto_awesome",
-    label: "Total Reflections",
-    value: "18",
-  },
-];
-
-const locations: LocationRow[] = [
-  {
-    category: "Public",
-    id: "LOC-882-C",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuClhoMIwQD6j1yDT-5IeA1hHT-oazio_ycg2tGLjEvOHeZ7QUdnbiFkQFZUQKlfcFgJ8Q4kLelmRxhaWUi4NSiCHfBsozaNs8ZngkwBoObEoX-oEqLjxpNtgiPs-iBt4C6sIGeyHPeV3aa_ALqZzJ5QYgo0CQyP5hZffG6E2OJoj7vynH7gH3uKmoplz-nVPO44xeePqbmSHrm9nO4Y4Y1OIdpmwf5bBqI_ElDxsdA-XE4fyHmtF_wW1_DBkqJrz4ZZNPQINm80LFAY",
-    name: "Cyberjaya Community Library",
-    reflections: "3,410",
-    status: "Active",
-    visits: "14,202",
-  },
-  {
-    category: "Casual",
-    id: "LOC-441-B",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCXCf3YYxAs2ngby25WUQxWVCYPPhXpp9ZHBwtaOvsASZkJIr-QosutJPTPZzAoRv_5-E4BRyAEAp280CTGD71j2JKQeR1e2winHfybue0QOWfdBGewXeYqTAsS6FCxjQuTfBYnE3Cp5LXNGMssjWTAHAgC5DfEKvm09qtyqf2u2QMrul_vCap1QuYrOHfMBpUuTVRnczEPb3lsJr6NW8X6KVPplglgvQvmcfQaH9HdnheT4zpBcMKvzTpQ2IuRNk3UZljcFZtWZqnZ",
-    name: "Blue Flow Cafe",
-    reflections: "1,240",
-    status: "Active",
-    visits: "8,912",
-  },
-  {
-    category: "Office",
-    id: "LOC-109-Z",
-    name: "Zenith Workspace",
-    reflections: "890",
-    status: "Offline",
-    visits: "4,200",
-  },
-];
-
-const reflections: Reflection[] = [
-  {
-    borderClassName: "border-[#22D3EE]",
-    detail: "System recorded a high NPS score of 9.4 for this location session.",
-    quote: "Incredible quiet at the Library.",
-    time: "2m ago",
-  },
-  {
-    borderClassName: "border-slate-600",
-    detail: "Engagement spike detected in casual seating area B.",
-    quote: "Coffee at Blue Flow was optimal.",
-    time: "14m ago",
-  },
-  {
-    borderClassName: "border-[#22D3EE]",
-    detail: "NFC interaction triggered correctly on first attempt.",
-    quote: "Smooth check-in experience.",
-    time: "1h ago",
-  },
-];
-
 export default async function AdminPage() {
-  const user = await requireAuth("/admin");
-  const { progress } = await getDashboardData();
+  const user = await requireAdmin("/admin");
+  const [{ progress }, adminResult] = await Promise.all([
+    getDashboardData(),
+    getAdminOverview(),
+  ]);
+  const overview = adminResult.overview;
+  const stats: StatCard[] = [
+    {
+      badge: `${overview?.stats.active_locations ?? 0} Active`,
+      icon: "map",
+      label: "Total Managed Locations",
+      value: String(overview?.stats.total_locations ?? 0),
+    },
+    {
+      badge: "Live Data",
+      icon: "group",
+      label: "Total Visits (Global)",
+      value: (overview?.stats.total_visits ?? 0).toLocaleString(),
+    },
+    {
+      badge: "Live Data",
+      icon: "auto_awesome",
+      label: "Total Reflections",
+      value: (overview?.stats.total_reflections ?? 0).toLocaleString(),
+    },
+  ];
+  const reflections: Reflection[] = (overview?.recent_reflections ?? []).map(
+    (reflection) => ({
+      borderClassName:
+        reflection.comfort_rating >= 4 ? "border-[#22D3EE]" : "border-slate-600",
+      detail: `${reflection.user.name} rated comfort ${reflection.comfort_rating}/5 at ${reflection.space.name}.`,
+      id: reflection.id,
+      quote: reflection.reflection_text || `Reflection for ${reflection.space.name}`,
+      time: formatRelativeTime(reflection.created_at),
+    }),
+  );
 
   return (
     <AppChrome activeHref="/admin" progress={progress} user={user}>
@@ -161,35 +114,7 @@ export default async function AdminPage() {
                 </button>
               </div>
             </div>
-            <div className="custom-scrollbar overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-slate-700/30 text-[11px] uppercase tracking-widest text-slate-500">
-                    <th className="px-6 py-4 font-semibold">Location Name</th>
-                    <th className="px-6 py-4 font-semibold">Category</th>
-                    <th className="px-6 py-4 font-semibold">Total Visits</th>
-                    <th className="px-6 py-4 font-semibold">Reflections</th>
-                    <th className="px-6 py-4 font-semibold">Status</th>
-                    <th className="px-6 py-4 text-right font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700/30">
-                  {locations.map((location) => (
-                    <LocationTableRow key={location.id} location={location} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex items-center justify-between border-t border-slate-700/50 bg-slate-900/40 p-4">
-              <p className="text-[11px] text-slate-500">
-                Showing 1 to 3 of 3 entries
-              </p>
-              <div className="flex gap-1">
-                <button className="rounded-lg bg-[#22D3EE] px-3 py-1 text-xs font-bold text-[#0B1120]">
-                  1
-                </button>
-              </div>
-            </div>
+            <AdminLocationsTable locations={overview?.locations ?? []} />
           </section>
 
           <section className="grid grid-cols-1 gap-6 pb-12">
@@ -199,8 +124,13 @@ export default async function AdminPage() {
               </h4>
               <div className="custom-scrollbar space-y-4 overflow-y-auto pr-2">
                 {reflections.map((reflection) => (
-                  <ReflectionCard key={reflection.time} reflection={reflection} />
+                  <ReflectionCard key={reflection.id} reflection={reflection} />
                 ))}
+                {reflections.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-slate-400">
+                    {adminResult.error || "No reflections have been submitted yet."}
+                  </p>
+                ) : null}
               </div>
             </div>
           </section>
@@ -231,83 +161,6 @@ function StatCard({ stat }: { stat: StatCard }) {
   );
 }
 
-function LocationTableRow({ location }: { location: LocationRow }) {
-  const isActive = location.status === "Active";
-
-  return (
-    <tr className="group transition-colors hover:bg-slate-800/40">
-      <td className="px-6 py-5">
-        <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-700">
-            {location.image ? (
-              <Image
-                alt={location.name}
-                className="object-cover"
-                fill
-                sizes="40px"
-                src={location.image}
-              />
-            ) : (
-              <span className="material-symbols-outlined text-slate-500">
-                image_not_supported
-              </span>
-            )}
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white transition-colors group-hover:text-[#22D3EE]">
-              {location.name}
-            </p>
-            <p className="text-[10px] text-slate-500">ID: {location.id}</p>
-          </div>
-        </div>
-      </td>
-      <td className="px-6 py-5">
-        <span className="rounded bg-slate-800 px-2 py-1 text-[10px] font-bold uppercase tracking-tighter text-slate-300">
-          {location.category}
-        </span>
-      </td>
-      <td className="px-6 py-5 text-sm font-medium text-slate-300">
-        {location.visits}
-      </td>
-      <td className="px-6 py-5 text-sm font-medium text-slate-300">
-        {location.reflections}
-      </td>
-      <td className="px-6 py-5">
-        <div className="flex items-center gap-1.5">
-          <div
-            className={`h-1.5 w-1.5 rounded-full ${
-              isActive ? "animate-pulse bg-[#22D3EE]" : "bg-slate-500"
-            }`}
-          />
-          <span
-            className={`text-[10px] font-bold uppercase ${
-              isActive ? "text-[#22D3EE]" : "text-slate-500"
-            }`}
-          >
-            {location.status}
-          </span>
-        </div>
-      </td>
-      <td className="px-6 py-5 text-right">
-        <div className="flex items-center justify-end gap-2">
-          <button
-            aria-label={`View ${location.name}`}
-            className="rounded-lg p-2 text-slate-500 transition-all hover:bg-[#22D3EE]/20 hover:text-[#22D3EE]"
-          >
-            <span className="material-symbols-outlined text-sm">visibility</span>
-          </button>
-          <button
-            aria-label={`Delete ${location.name}`}
-            className="rounded-lg p-2 text-slate-500 transition-all hover:bg-red-500/20 hover:text-red-400"
-          >
-            <span className="material-symbols-outlined text-sm">delete</span>
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
 function ReflectionCard({ reflection }: { reflection: Reflection }) {
   return (
     <article
@@ -324,4 +177,15 @@ function ReflectionCard({ reflection }: { reflection: Reflection }) {
       </p>
     </article>
   );
+}
+
+function formatRelativeTime(value: string) {
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(value).getTime()) / 1000),
+  );
+  if (elapsedSeconds < 60) return "Just now";
+  if (elapsedSeconds < 3600) return `${Math.floor(elapsedSeconds / 60)}m ago`;
+  if (elapsedSeconds < 86400) return `${Math.floor(elapsedSeconds / 3600)}h ago`;
+  return `${Math.floor(elapsedSeconds / 86400)}d ago`;
 }

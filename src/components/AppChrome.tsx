@@ -49,7 +49,7 @@ export function AppChrome({
 }) {
   return (
     <main className="app-theme min-h-screen bg-background pb-24 text-on-background md:pb-8">
-      <AppSidebar activeHref={activeHref} />
+      <AppSidebar activeHref={activeHref} userRole={user.role} />
       <section className="md:ml-64">
         <AppHeader progress={progress} user={user} />
         <div className="mx-auto w-full max-w-7xl px-6 py-8">{children}</div>
@@ -58,7 +58,17 @@ export function AppChrome({
   );
 }
 
-function AppSidebar({ activeHref }: { activeHref: string }) {
+function AppSidebar({
+  activeHref,
+  userRole,
+}: {
+  activeHref: string;
+  userRole: string;
+}) {
+  const visiblePrimaryNavItems = primaryNavItems.filter(
+    (item) => item.href !== "/admin" || userRole === "admin",
+  );
+
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col border-r border-outline-variant bg-surface-container-lowest md:flex">
       <div className="flex flex-col gap-1 p-6">
@@ -71,7 +81,7 @@ function AppSidebar({ activeHref }: { activeHref: string }) {
         </p>
       </div>
       <nav className="custom-scrollbar mt-4 flex-1 space-y-1 overflow-y-auto px-3">
-        {primaryNavItems.map((item) => (
+        {visiblePrimaryNavItems.map((item) => (
           <NavLink
             active={activeHref === item.href}
             href={item.href}

@@ -8,27 +8,18 @@ from ..models import Space
 
 spaces_bp = Blueprint("spaces", __name__, url_prefix="/api/spaces")
 
-SPACE_FIELDS = {
-    "name",
-    "description",
-    "category",
-    "address",
-    "latitude",
-    "longitude",
-    "amenities",
-    "atmosphere_tags",
-    "social_intensity",
-    "noise_level",
-    "cost_level",
-    "opening_hours",
+REQUIRED_STRING_FIELDS = ("name", "description", "category", "address")
+OPTIONAL_STRING_FIELDS = (
     "safety_notes",
     "cultural_notes",
-    "accessibility_features",
     "image_url",
     "image_alt",
-    "rating",
-    "is_active",
-}
+)
+LIST_FIELDS = (
+    "amenities",
+    "atmosphere_tags",
+    "accessibility_features",
+)
 
 
 def _slugify(value: str) -> str:
@@ -46,6 +37,81 @@ def _available_slug(value: str, current_space_id: int | None = None) -> str:
             return slug
         slug = f"{base_slug}-{suffix}"
         suffix += 1
+
+
+def _validated_updates(payload: dict, creating: bool = False):
+    updates = {}
+    for field in REQUIRED_STRING_FIELDS:
+        if creating and field not in payload:
+            return None, f"Missing required fields: {field}."
+        if field in payload:
+            value = payload[field]
+            if not isinstance(value, str) or not value.strip():
+                return None, f"{field} must be a non-empty string."
+            updates[field] = value.strip().lower() if field == "category" else value.strip()
+
+    for field in OPTIONAL_STRING_FIELDS:
+        if field not in payload:
+            continue
+        value = payload[field]
+        if value is not None and not isinstance(value, str):
+            return None, f"{field} must be a string or null."
+        updates[field] = value.strip() if isinstance(value, str) and value.strip() else None
+
+    if "noise_level" in payload:
+        value = payload["noise_level"]
+        if value not in ("silent", "hum", "moderate", "lively"):
+            return None, "noise_level must be silent, hum, moderate, or lively."
+        updates["noise_level"] = value
+
+    for field in LIST_FIELDS:
+        if field not in payload:
+            continue
+        value = payload[field]
+        if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+            return None, f"{field} must be a list of strings."
+        updates[field] = list(dict.fromkeys(item.strip() for item in value if item.strip()))
+
+    for field, minimum, maximum in (
+        ("social_intensity", 1, 3),
+        ("cost_level", 1, 3),
+    ):
+        if field in payload:
+            value = payload[field]
+            if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+                return None, f"{field} must be a whole number from {minimum} to {maximum}."
+            updates[field] = value
+
+    for field, minimum, maximum in (
+        ("latitude", -90, 90),
+        ("longitude", -180, 180),
+        ("rating", 0, 5),
+    ):
+        if field in payload:
+            value = payload[field]
+            if value is not None and (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not minimum <= value <= maximum
+            ):
+                return None, f"{field} must be a number from {minimum} to {maximum} or null."
+            updates[field] = value
+
+    if "opening_hours" in payload:
+        value = payload["opening_hours"]
+        if not isinstance(value, dict) or any(
+            not isinstance(key, str) or not isinstance(hours, str)
+            for key, hours in value.items()
+        ):
+            return None, "opening_hours must be an object of text values."
+        updates["opening_hours"] = value
+
+    if "is_active" in payload:
+        if not isinstance(payload["is_active"], bool):
+            return None, "is_active must be a boolean."
+        updates["is_active"] = payload["is_active"]
+
+    return updates, None
 
 
 @spaces_bp.get("")
@@ -83,20 +149,22 @@ def get_space(space_identifier: str):
 @spaces_bp.post("")
 @admin_required
 def create_space():
-    payload = request.get_json(silent=True) or {}
-    missing = [
-        field
-        for field in ("name", "description", "category", "address")
-        if not payload.get(field)
-    ]
-    if missing:
-        return jsonify({"error": f"Missing required fields: {', '.join(missing)}."}), 400
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+    updates, error = _validated_updates(payload, creating=True)
+    if error:
+        return jsonify({"error": error}), 400
 
-    requested_slug = str(payload.get("slug") or payload["name"])
+    requested_slug = payload.get("slug")
+    if requested_slug is not None and (
+        not isinstance(requested_slug, str) or not requested_slug.strip()
+    ):
+        return jsonify({"error": "slug must be a non-empty string."}), 400
+    requested_slug = requested_slug or payload["name"]
     space = Space(slug=_available_slug(requested_slug))
-    for field in SPACE_FIELDS:
-        if field in payload:
-            setattr(space, field, payload[field])
+    for field, value in updates.items():
+        setattr(space, field, value)
     db.session.add(space)
     db.session.commit()
     return jsonify({"space": space.to_dict()}), 201
@@ -108,12 +176,18 @@ def update_space(space_id: int):
     space = db.session.get(Space, space_id)
     if space is None:
         return jsonify({"error": "Space not found."}), 404
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+    updates, error = _validated_updates(payload)
+    if error:
+        return jsonify({"error": error}), 400
     if "slug" in payload:
-        space.slug = _available_slug(str(payload["slug"]), space.id)
-    for field in SPACE_FIELDS:
-        if field in payload:
-            setattr(space, field, payload[field])
+        if not isinstance(payload["slug"], str) or not payload["slug"].strip():
+            return jsonify({"error": "slug must be a non-empty string."}), 400
+        space.slug = _available_slug(payload["slug"], space.id)
+    for field, value in updates.items():
+        setattr(space, field, value)
     db.session.commit()
     return jsonify({"space": space.to_dict()})
 

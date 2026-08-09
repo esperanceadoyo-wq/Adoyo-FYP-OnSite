@@ -38,3 +38,13 @@ export async function requireAuth(nextPath: string) {
 
   return user;
 }
+
+export async function requireAdmin(nextPath: string) {
+  const user = await requireAuth(nextPath);
+
+  if (user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  return user;
+}

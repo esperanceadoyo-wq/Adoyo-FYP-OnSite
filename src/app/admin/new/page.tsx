@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AppChrome } from "@/components/AppChrome";
 import { getDashboardData } from "@/lib/dashboard-data";
-import { requireAuth } from "@/lib/server-auth";
+import { requireAdmin } from "@/lib/server-auth";
 import { AddLocationForm } from "./add-location-form";
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AddNewLocationPage() {
-  const user = await requireAuth("/admin/new");
+  const user = await requireAdmin("/admin/new");
   const { progress } = await getDashboardData();
 
   return (

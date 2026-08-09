@@ -215,7 +215,7 @@ ACHIEVEMENTS = [
 ]
 
 
-def seed_database() -> None:
+def seed_database(include_admin: bool = True) -> None:
     for data in SPACES:
         space = db.session.scalar(
             db.select(Space).where(
@@ -264,5 +264,20 @@ def seed_database() -> None:
                 preferred_amenities=["wifi", "outlets"],
             )
         )
+
+    if include_admin:
+        admin_user = db.session.scalar(
+            db.select(User).where(User.email == "admin@onsite.local")
+        )
+        if admin_user is None:
+            admin_user = User(
+                name="OnSite Administrator",
+                email="admin@onsite.local",
+                role="admin",
+            )
+            admin_user.set_password("AdminPass123!")
+            db.session.add(admin_user)
+            db.session.flush()
+            db.session.add(UserProfile(user_id=admin_user.id))
 
     db.session.commit()

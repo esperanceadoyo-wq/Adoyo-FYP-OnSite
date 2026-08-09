@@ -24,6 +24,8 @@ Demo credentials after seeding:
 
 - Email: `demo@onsite.local`
 - Password: `DemoPass123!`
+- Admin email: `admin@onsite.local`
+- Admin password: `AdminPass123!`
 
 ## API Surface
 
@@ -39,6 +41,7 @@ Demo credentials after seeding:
 - `GET`, `POST /api/saved-spaces` and `DELETE /api/saved-spaces/<space_id>`
 - `GET /api/progress`
 - `GET /api/leaderboard`
+- Admin-only `GET /api/admin/overview`
 - `GET /api/achievements`
 - Admin-only `POST`, `PATCH`, and `DELETE` operations under `/api/spaces`
 
