@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
 from app.extensions import db
-from app.models import Reflection, SavedSpace, Space, User, Visit
+from app.models import Reflection, SavedSpace, Space, User, UserProfile, Visit
 from app.services.progress_service import get_progress
 
 
@@ -28,6 +28,142 @@ def test_health_check(client):
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "ok"
+
+
+def test_leaderboard_requires_authentication(client):
+    response = client.get("/api/leaderboard")
+
+    assert response.status_code == 401
+
+
+def test_leaderboard_ranks_visible_students_by_real_progress(
+    app, authenticated_client
+):
+    second_client = app.test_client()
+    third_client = app.test_client()
+    hidden_client = app.test_client()
+    for test_client, name, email in (
+        (second_client, "Second Explorer", "second@example.edu"),
+        (third_client, "Third Explorer", "third@example.edu"),
+        (hidden_client, "Hidden Explorer", "hidden@example.edu"),
+    ):
+        response = test_client.post(
+            "/api/auth/register",
+            json={"email": email, "name": name, "password": "SecurePass123!"},
+        )
+        assert response.status_code == 201
+
+    with app.app_context():
+        space = db.session.scalar(db.select(Space).order_by(Space.id))
+        users = {
+            user.email: user
+            for user in db.session.scalars(
+                db.select(User).where(
+                    User.email.in_(
+                        [
+                            "demo@onsite.local",
+                            "second@example.edu",
+                            "third@example.edu",
+                            "hidden@example.edu",
+                        ]
+                    )
+                )
+            ).all()
+        }
+        visits = []
+        for email, visit_count in (
+            ("second@example.edu", 3),
+            ("third@example.edu", 2),
+            ("hidden@example.edu", 8),
+        ):
+            for offset in range(visit_count):
+                visit = Visit(
+                    user_id=users[email].id,
+                    space_id=space.id,
+                    verification_method="location",
+                    visited_at=datetime.now(timezone.utc) + timedelta(minutes=offset),
+                )
+                db.session.add(visit)
+                visits.append((email, visit))
+        db.session.flush()
+        second_visit = next(
+            visit for email, visit in visits if email == "second@example.edu"
+        )
+        db.session.add(
+            Reflection(
+                comfort_rating=5,
+                learning_value_rating=4,
+                social_rating=3,
+                space_id=space.id,
+                user_id=users["second@example.edu"].id,
+                visit_id=second_visit.id,
+                would_return=True,
+            )
+        )
+        hidden_profile = db.session.scalar(
+            db.select(UserProfile).where(
+                UserProfile.user_id == users["hidden@example.edu"].id
+            )
+        )
+        hidden_profile.leaderboard_visible = False
+        db.session.commit()
+
+        second_progress = get_progress(users["second@example.edu"].id)
+        third_progress = get_progress(users["third@example.edu"].id)
+
+    response = authenticated_client.get("/api/leaderboard")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert [entry["name"] for entry in data["entries"][:2]] == [
+        "Second Explorer",
+        "Third Explorer",
+    ]
+    assert [entry["rank"] for entry in data["entries"]] == [1, 2, 3]
+    assert data["entries"][0]["xp"] == second_progress["xp"]
+    assert data["entries"][0]["visits"] == 3
+    assert data["entries"][0]["reflections"] == 1
+    assert data["entries"][1]["xp"] == third_progress["xp"]
+    assert data["entries"][2]["is_current_user"] is True
+    assert all(entry["name"] != "Hidden Explorer" for entry in data["entries"])
+    assert data["current_user_visible"] is True
+    assert data["total_visible_users"] == 3
+
+
+def test_leaderboard_respects_current_user_visibility(authenticated_client):
+    updated = authenticated_client.patch(
+        "/api/auth/account", json={"leaderboard_visible": False}
+    )
+    response = authenticated_client.get("/api/leaderboard")
+    data = response.get_json()
+
+    assert updated.status_code == 200
+    assert response.status_code == 200
+    assert data["entries"] == []
+    assert data["current_user_visible"] is False
+    assert data["total_visible_users"] == 0
+
+
+def test_leaderboard_validates_and_applies_limit(app, authenticated_client):
+    other_client = app.test_client()
+    assert other_client.post(
+        "/api/auth/register",
+        json={
+            "email": "limited@example.edu",
+            "name": "Limited Explorer",
+            "password": "SecurePass123!",
+        },
+    ).status_code == 201
+
+    limited = authenticated_client.get("/api/leaderboard?limit=1")
+
+    assert limited.status_code == 200
+    assert len(limited.get_json()["entries"]) == 1
+    assert limited.get_json()["total_visible_users"] == 2
+    for value in ("0", "101", "many"):
+        response = authenticated_client.get(f"/api/leaderboard?limit={value}")
+        assert response.status_code == 400
+        assert response.get_json()["error"] == "limit must be between 1 and 100."
 
 
 def test_space_catalog_returns_display_metadata_and_supports_filters(client):

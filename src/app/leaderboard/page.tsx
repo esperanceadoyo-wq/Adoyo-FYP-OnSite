@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AppChrome } from "@/components/AppChrome";
 import { getInitials } from "@/lib/auth";
 import { getDashboardData } from "@/lib/dashboard-data";
+import { getLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import { requireAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
@@ -31,100 +32,6 @@ type LeaderboardUser = {
   xp: string;
 };
 
-const podiumUsers: PodiumUser[] = [
-  {
-    initials: "AC",
-    level: "Level 5",
-    name: "Alex Chen",
-    rank: 2,
-    spaces: 184,
-    title: "Third Space Champion",
-    xp: "1000+",
-  },
-  {
-    initials: "SS",
-    level: "Level 6",
-    name: "Sarah Sentinel",
-    rank: 1,
-    reflections: 89,
-    spaces: 312,
-    title: "OnSite Ambassador",
-    xp: "1500+",
-  },
-  {
-    initials: "ER",
-    level: "Level 4",
-    name: "Elena Rodriguez",
-    rank: 3,
-    spaces: 165,
-    title: "Cultural Navigator",
-    xp: "650+",
-  },
-];
-
-const rankedUsers: LeaderboardUser[] = [
-  {
-    initials: "MV",
-    level: "Level 3",
-    name: "Marcus Vance",
-    rank: 4,
-    reflections: 42,
-    spaces: 142,
-    title: "Community Connector",
-    xp: "350+",
-  },
-  {
-    initials: "JR",
-    level: "Level 2",
-    name: "Jordan Ryu",
-    rank: 5,
-    reflections: 38,
-    spaces: 129,
-    title: "Digital Scout",
-    xp: "150+",
-  },
-  {
-    initials: "LB",
-    level: "Level 2",
-    name: "Liam Baker",
-    rank: 6,
-    reflections: 12,
-    spaces: 24,
-    title: "Digital Scout",
-    xp: "160+",
-  },
-  {
-    initials: "DW",
-    level: "Level 1",
-    name: "David Wright",
-    rank: 8,
-    reflections: 5,
-    spaces: 10,
-    title: "New Explorer",
-    xp: "90+",
-  },
-  {
-    initials: "SM",
-    level: "Level 1",
-    name: "Sofia Martinez",
-    rank: 9,
-    reflections: 4,
-    spaces: 8,
-    title: "New Explorer",
-    xp: "85+",
-  },
-  {
-    initials: "TK",
-    level: "Level 1",
-    name: "Thomas Kim",
-    rank: 10,
-    reflections: 2,
-    spaces: 5,
-    title: "New Explorer",
-    xp: "70+",
-  },
-];
-
 const tiers = [
   { level: "Level 1", title: "New Explorer", xp: "0 XP" },
   { level: "Level 2", title: "Campus Wanderer", xp: "200 XP" },
@@ -136,23 +43,19 @@ const tiers = [
 
 export default async function LeaderboardPage() {
   const user = await requireAuth("/leaderboard");
-  const { progress } = await getDashboardData();
-  const currentUser: LeaderboardUser = {
-    initials: getInitials(user.name),
-    isCurrentUser: true,
-    level: `Level ${progress?.level ?? 1}`,
-    name: `YOU (${user.name})`,
-    rank: 7,
-    reflections: progress?.reflections ?? 0,
-    spaces: progress?.visits ?? 0,
-    title: levelName(progress?.level ?? 1),
-    xp: `${progress?.xp ?? 0}`,
-  };
-  const listUsers = [
-    ...rankedUsers.slice(0, 3),
-    currentUser,
-    ...rankedUsers.slice(3),
-  ];
+  const [{ progress }, leaderboard] = await Promise.all([
+    getDashboardData(),
+    getLeaderboard(),
+  ]);
+  const podiumUsers = leaderboard.entries.slice(0, 3).map(toPodiumUser);
+  const listUsers = leaderboard.entries.slice(3).map(toLeaderboardUser);
+  const leaderboardMessage = leaderboard.error
+    ? leaderboard.error
+    : leaderboard.totalVisibleUsers === 0
+      ? "No explorers are visible on the leaderboard yet."
+      : !leaderboard.currentUserVisible
+        ? "Your leaderboard visibility is turned off in Settings."
+        : null;
 
   return (
     <AppChrome activeHref="/leaderboard" progress={progress} user={user}>
@@ -189,6 +92,11 @@ export default async function LeaderboardPage() {
           {listUsers.map((rankedUser) => (
             <RankRow key={rankedUser.rank} user={rankedUser} />
           ))}
+          {leaderboardMessage ? (
+            <p className="py-6 text-center text-sm text-slate-400">
+              {leaderboardMessage}
+            </p>
+          ) : null}
         </section>
 
         <footer className="mt-16 text-center">
@@ -386,11 +294,33 @@ function formatRank(rank: number) {
   return rank.toString().padStart(2, "0");
 }
 
-function levelName(level: number) {
-  if (level >= 6) return "OnSite Ambassador";
-  if (level >= 5) return "Third Space Champion";
-  if (level >= 4) return "Cultural Navigator";
-  if (level >= 3) return "Community Connector";
-  if (level >= 2) return "Campus Wanderer";
-  return "New Explorer";
+function toPodiumUser(entry: LeaderboardEntry): PodiumUser {
+  return {
+    initials: getInitials(entry.name),
+    level: `Level ${entry.level}`,
+    name: displayName(entry),
+    rank: entry.rank as 1 | 2 | 3,
+    reflections: entry.reflections,
+    spaces: entry.visits,
+    title: entry.title,
+    xp: String(entry.xp),
+  };
+}
+
+function toLeaderboardUser(entry: LeaderboardEntry): LeaderboardUser {
+  return {
+    initials: getInitials(entry.name),
+    isCurrentUser: entry.is_current_user,
+    level: `Level ${entry.level}`,
+    name: displayName(entry),
+    rank: entry.rank,
+    reflections: entry.reflections,
+    spaces: entry.visits,
+    title: entry.title,
+    xp: String(entry.xp),
+  };
+}
+
+function displayName(entry: LeaderboardEntry) {
+  return entry.is_current_user ? `YOU (${entry.name})` : entry.name;
 }
