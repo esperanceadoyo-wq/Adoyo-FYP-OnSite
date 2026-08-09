@@ -38,6 +38,22 @@ def test_health_check(client):
     assert response.get_json()["status"] == "ok"
 
 
+def test_social_networking_endpoints_are_not_exposed(client):
+    for path in (
+        "/api/community/posts",
+        "/api/comments",
+        "/api/follows",
+        "/api/messages",
+    ):
+        get_response = client.get(path)
+        post_response = client.post(path, json={"content": "Not part of the MVP."})
+
+        assert get_response.status_code == 404
+        assert post_response.status_code == 404
+        assert get_response.get_json()["error"] == "Endpoint not found."
+        assert post_response.get_json()["error"] == "Endpoint not found."
+
+
 def test_leaderboard_requires_authentication(client):
     response = client.get("/api/leaderboard")
 

@@ -75,6 +75,15 @@ Before changing framework conventions, read the relevant local Next.js 16 docume
 
 ---
 
+## Notifications And Community MVP Boundary
+1. Social networking is outside the documented MVP. Do not add public posts, comments, likes, follows, direct messages, public reflection sharing, or community-feed persistence unless the project scope is explicitly changed.
+2. The current `/notifications` community feed is static design-prototype content, not a backend contract or source of truth. Its composer and social actions must not write data or expose user reflections.
+3. Future notifications must be private, system-generated records for the owning user. Suitable events include achievement awards, completed visits, reflection completion, and administrative space updates.
+4. System notifications must not store precise coordinates or republish private reflection text. They must use authenticated per-user list/read endpoints and remain separate from general feedback and post-visit reflections.
+5. A visible notifications implementation requires an explicit frontend request so its controls and states can be updated deliberately.
+
+---
+
 ## Core Principles
 1. **Root Cause Over Surface Fixes:** Fix the data model or state synchronization over adding arbitrary timeouts or guards.
 2. **Mobile-First Simplicity First:** Keep layout rendering lightweight for smooth performance on mobile network connections.
