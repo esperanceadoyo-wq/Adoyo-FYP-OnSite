@@ -226,6 +226,34 @@ class Reflection(db.Model):
         }
 
 
+class GeneralFeedback(db.Model):
+    __tablename__ = "general_feedback"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    category = db.Column(db.String(30), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Integer)
+    page_path = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "category": self.category,
+            "message": self.message,
+            "rating": self.rating,
+            "page_path": self.page_path,
+            "created_at": isoformat(self.created_at),
+        }
+
+
 class Recommendation(db.Model):
     __tablename__ = "recommendations"
 

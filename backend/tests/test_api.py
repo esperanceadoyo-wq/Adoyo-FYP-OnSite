@@ -3,7 +3,15 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
 from app.extensions import db
-from app.models import Reflection, SavedSpace, Space, User, UserProfile, Visit
+from app.models import (
+    GeneralFeedback,
+    Reflection,
+    SavedSpace,
+    Space,
+    User,
+    UserProfile,
+    Visit,
+)
 from app.services.progress_service import get_progress
 
 
@@ -659,6 +667,96 @@ def test_admin_can_create_update_deactivate_and_reactivate_space(admin_client):
     assert overview_space["space"]["is_active"] is False
     assert reactivated.status_code == 200
     assert restored_detail.status_code == 200
+
+
+def test_general_feedback_requires_authentication(client):
+    response = client.post(
+        "/api/feedback", json={"message": "Anonymous feedback is not accepted."}
+    )
+
+    assert response.status_code == 401
+
+
+def test_general_feedback_validates_and_persists(app, authenticated_client):
+    response = authenticated_client.post(
+        "/api/feedback",
+        json={
+            "category": "suggestion",
+            "message": "  Please add more quiet study spaces.  ",
+            "page_path": "/explore",
+            "rating": 4,
+        },
+    )
+    feedback = response.get_json()["feedback"]
+
+    assert response.status_code == 201
+    assert feedback["category"] == "suggestion"
+    assert feedback["message"] == "Please add more quiet study spaces."
+    assert feedback["page_path"] == "/explore"
+    assert feedback["rating"] == 4
+    assert authenticated_client.get("/api/feedback").status_code == 405
+
+    with app.app_context():
+        stored = db.session.get(GeneralFeedback, feedback["id"])
+        assert stored is not None
+        assert stored.message == "Please add more quiet study spaces."
+
+    invalid_cases = [
+        (["not", "an", "object"], "Request body must be a JSON object."),
+        (
+            {"category": "praise", "message": "A valid length message."},
+            "category must be bug, experience, other, or suggestion.",
+        ),
+        (
+            {"category": ["bug"], "message": "A valid length message."},
+            "category must be bug, experience, other, or suggestion.",
+        ),
+        ({"message": "bad"}, "message must contain between 5 and 2000 characters."),
+        (
+            {"message": "A valid message.", "rating": True},
+            "rating must be a whole number from 1 to 5 or null.",
+        ),
+        (
+            {"message": "A valid message.", "page_path": "x" * 256},
+            "page_path must be a short string or null.",
+        ),
+    ]
+    for payload, error in invalid_cases:
+        invalid = authenticated_client.post("/api/feedback", json=payload)
+        assert invalid.status_code == 400
+        assert invalid.get_json()["error"] == error
+
+
+def test_only_admins_can_review_general_feedback(
+    app, authenticated_client, admin_client
+):
+    first = authenticated_client.post(
+        "/api/feedback",
+        json={"category": "bug", "message": "The first feedback record."},
+    )
+    second = authenticated_client.post(
+        "/api/feedback",
+        json={"message": "The newest feedback record.", "rating": 5},
+    )
+    anonymous = app.test_client().get("/api/admin/feedback")
+    student = authenticated_client.get("/api/admin/feedback")
+    admin = admin_client.get("/api/admin/feedback?limit=1")
+    data = admin.get_json()["feedback"]
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert anonymous.status_code == 401
+    assert student.status_code == 403
+    assert admin.status_code == 200
+    assert len(data) == 1
+    assert data[0]["message"] == "The newest feedback record."
+    assert data[0]["user"]["email"] == "demo@onsite.local"
+    assert data[0]["user"]["name"] == "Christine Explorer"
+
+    for limit in ("0", "101", "many"):
+        invalid = admin_client.get(f"/api/admin/feedback?limit={limit}")
+        assert invalid.status_code == 400
+        assert invalid.get_json()["error"] == "limit must be between 1 and 100."
 
 
 def test_onboarding_profile_contract_does_not_infer_uncollected_fields(

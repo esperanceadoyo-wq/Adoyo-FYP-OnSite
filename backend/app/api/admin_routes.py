@@ -1,11 +1,45 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 
 from ..auth import admin_required
 from ..extensions import db
-from ..models import Reflection, Space, User, Visit
+from ..models import GeneralFeedback, Reflection, Space, User, Visit
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
+
+
+@admin_bp.get("/feedback")
+@admin_required
+def general_feedback():
+    limit_value = request.args.get("limit", "50")
+    try:
+        limit = int(limit_value)
+    except ValueError:
+        return jsonify({"error": "limit must be between 1 and 100."}), 400
+    if limit < 1 or limit > 100:
+        return jsonify({"error": "limit must be between 1 and 100."}), 400
+
+    rows = db.session.execute(
+        db.select(GeneralFeedback, User)
+        .join(User, User.id == GeneralFeedback.user_id)
+        .order_by(GeneralFeedback.created_at.desc(), GeneralFeedback.id.desc())
+        .limit(limit)
+    ).all()
+    return jsonify(
+        {
+            "feedback": [
+                {
+                    **feedback.to_dict(),
+                    "user": {
+                        "email": user.email,
+                        "id": user.id,
+                        "name": user.name,
+                    },
+                }
+                for feedback, user in rows
+            ]
+        }
+    )
 
 
 @admin_bp.get("/overview")

@@ -38,10 +38,12 @@ Demo credentials after seeding:
 - `POST /api/recommendations` and `GET /api/recommendations/history`
 - `GET`, `POST /api/visits`
 - `GET`, `POST /api/reflections`
+- Authenticated `POST /api/feedback`
 - `GET`, `POST /api/saved-spaces` and `DELETE /api/saved-spaces/<space_id>`
 - `GET /api/progress`
 - `GET /api/leaderboard`
 - Admin-only `GET /api/admin/overview`
+- Admin-only `GET /api/admin/feedback`
 - `GET /api/achievements`
 - Admin-only `POST`, `PATCH`, and `DELETE` operations under `/api/spaces`
 

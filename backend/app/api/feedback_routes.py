@@ -5,11 +5,68 @@ from sqlalchemy.exc import IntegrityError
 
 from ..auth import login_required
 from ..extensions import db
-from ..models import Reflection, Space, Visit, utc_now
+from ..models import GeneralFeedback, Reflection, Space, Visit, utc_now
 from ..services.location_service import distance_meters
 from ..services.progress_service import award_eligible_achievements
 
 feedback_bp = Blueprint("feedback", __name__, url_prefix="/api")
+
+GENERAL_FEEDBACK_CATEGORIES = {"bug", "experience", "other", "suggestion"}
+
+
+@feedback_bp.post("/feedback")
+@login_required
+def create_general_feedback():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+
+    category = payload.get("category", "other")
+    if (
+        not isinstance(category, str)
+        or category.strip().lower() not in GENERAL_FEEDBACK_CATEGORIES
+    ):
+        return jsonify(
+            {"error": "category must be bug, experience, other, or suggestion."}
+        ), 400
+    category = category.strip().lower()
+
+    message = payload.get("message")
+    if not isinstance(message, str) or not 5 <= len(message.strip()) <= 2000:
+        return jsonify(
+            {"error": "message must contain between 5 and 2000 characters."}
+        ), 400
+
+    rating = payload.get("rating")
+    if rating is not None and (
+        isinstance(rating, bool)
+        or not isinstance(rating, int)
+        or not 1 <= rating <= 5
+    ):
+        return jsonify(
+            {"error": "rating must be a whole number from 1 to 5 or null."}
+        ), 400
+
+    page_path = payload.get("page_path")
+    if page_path is not None and (
+        not isinstance(page_path, str) or len(page_path.strip()) > 255
+    ):
+        return jsonify({"error": "page_path must be a short string or null."}), 400
+
+    feedback = GeneralFeedback(
+        user_id=g.current_user.id,
+        category=category,
+        message=message.strip(),
+        rating=rating,
+        page_path=(
+            page_path.strip()
+            if isinstance(page_path, str) and page_path.strip()
+            else None
+        ),
+    )
+    db.session.add(feedback)
+    db.session.commit()
+    return jsonify({"feedback": feedback.to_dict()}), 201
 
 
 @feedback_bp.post("/visits")
