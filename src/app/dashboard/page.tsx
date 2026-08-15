@@ -8,6 +8,7 @@ import {
   LogoutButton,
 } from "@/components/DashboardAuth";
 import { NearbyRecommendations } from "@/components/NearbyRecommendations";
+import { BrandLogo } from "@/components/BrandLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import {
   getDashboardData,
@@ -21,7 +22,7 @@ import { catalogSpacePath } from "@/lib/space-flow";
 import type { Space } from "@/lib/spaces";
 
 export const metadata: Metadata = {
-  title: "Azure Horizon | OnSite Community Hub",
+  title: "Dashboard",
 };
 
 type IconName =
@@ -80,7 +81,7 @@ export default async function DashboardPage() {
     await getDashboardData();
 
   return (
-    <main className="min-h-screen bg-background pb-24 text-on-background md:pb-8">
+    <main className="min-h-screen bg-background pb-8 text-on-background">
       <DesktopSidebar />
       <section className="md:ml-64">
         <DashboardHeader progress={progress} user={user} />
@@ -107,17 +108,17 @@ function DesktopSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col border-r border-outline-variant bg-surface-container-lowest md:flex">
       <div className="flex flex-col gap-1 p-6">
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-on-surface">
-          <Icon className="h-6 w-6 text-primary" name="mapPin" />
-          ONSITE
-        </h1>
+        <Link aria-label="OnSite dashboard" href="/dashboard">
+          <BrandLogo className="h-8 w-32" priority />
+        </Link>
         <p className="text-[10px] font-medium leading-tight text-on-surface-variant">
           WHERE COMFORT MEETS CONNECTION
         </p>
       </div>
       <nav className="custom-scrollbar mt-4 flex-1 space-y-1 overflow-y-auto px-3">
         {navItems.map((item) => (
-          <a
+          <Link
+            aria-current={item.active ? "page" : undefined}
             className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200 active:scale-95 ${
               item.active
                 ? "bg-primary-container text-on-primary-container"
@@ -133,7 +134,7 @@ function DesktopSidebar() {
             <span className={item.active ? "font-bold" : "font-medium"}>
               {item.label}
             </span>
-          </a>
+          </Link>
         ))}
         <div className="px-4 pb-2 pt-4">
           <hr className="border-outline-variant" />
@@ -148,14 +149,14 @@ function DesktopSidebar() {
               <span className="font-medium">{item.label}</span>
             </LogoutButton>
           ) : (
-            <a
+            <Link
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-on-surface-variant transition-all duration-200 hover:bg-surface-container-low active:scale-95"
               href={item.href}
               key={item.label}
             >
               <Icon className="h-5 w-5" name={item.icon} />
               <span className="font-medium">{item.label}</span>
-            </a>
+            </Link>
           )
         ))}
       </nav>

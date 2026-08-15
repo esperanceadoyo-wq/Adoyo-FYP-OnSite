@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { startRouteMotion } from "@/components/RouteMotion";
 
 const noiseOptions = ["Quiet", "Moderate", "Lively", "Very Active"];
 const vibeOptions = ["Deep Focus", "Collaborative", "Casual", "Socializing"];
@@ -95,6 +96,7 @@ export function ReflectionForm({
         return;
       }
 
+      startRouteMotion();
       router.push("/profile");
     } catch {
       window.alert("The reflection service is temporarily unavailable.");

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { startRouteMotion } from "@/components/RouteMotion";
 
 const chipGroups = [
   {
@@ -85,6 +86,7 @@ export function AddLocationForm() {
         return;
       }
       window.alert("Location created successfully.");
+      startRouteMotion();
       router.push("/admin");
       router.refresh();
     } catch {

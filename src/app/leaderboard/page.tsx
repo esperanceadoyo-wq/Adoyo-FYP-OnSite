@@ -6,7 +6,7 @@ import { getLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import { requireAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
-  title: "Global Leaderboard | OnSite",
+  title: "Global Leaderboard",
 };
 
 type PodiumUser = {
@@ -70,7 +70,7 @@ export default async function LeaderboardPage() {
       <div className="fixed left-[5%] top-[15%] -z-20 h-[400px] w-[400px] rounded-full bg-[#22D3EE]/5 blur-[150px]" />
       <div className="fixed bottom-[10%] right-[5%] -z-20 h-[300px] w-[300px] rounded-full bg-[#22D3EE]/5 blur-[120px]" />
 
-      <div className="relative mx-auto max-w-6xl pb-16 pt-6">
+      <div className="relative mx-auto max-w-6xl pb-10 pt-6">
         <header className="relative mb-20 text-center">
           <div className="absolute -top-24 left-1/2 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-[#22D3EE]/10 blur-[120px]" />
           <h1 className="mb-4 text-5xl font-extrabold tracking-tight text-slate-50 md:text-6xl">

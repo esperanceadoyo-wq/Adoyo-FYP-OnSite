@@ -8,7 +8,7 @@ import { catalogSpacePath } from "@/lib/space-flow";
 import { getSpaceCatalog, type Space } from "@/lib/spaces";
 
 export const metadata: Metadata = {
-  title: "Explore Spaces | OnSite",
+  title: "Explore Spaces",
 };
 
 type SectionDefinition = {
@@ -76,7 +76,7 @@ export default async function ExplorePage() {
           </p>
         </header>
 
-        <div className="relative z-10 flex-grow pb-24">
+        <div className="relative z-10 flex-grow pb-10">
           {catalog.error ? (
             <CatalogState
               description={catalog.error}

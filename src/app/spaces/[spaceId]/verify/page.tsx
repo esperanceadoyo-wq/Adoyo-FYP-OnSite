@@ -50,7 +50,7 @@ export default async function VisitVerificationPage({
   const reflectionQuery = new URLSearchParams({ visitId: String(visit.id) });
 
   return (
-    <main className="flex min-h-[max(884px,100dvh)] flex-col overflow-hidden bg-background text-on-background antialiased">
+    <main className="flex min-h-dvh flex-col overflow-hidden bg-background text-on-background antialiased">
       <header className="flex w-full items-center px-6 pb-4 pt-12">
         <Link
           className="flex items-center gap-2 rounded-full bg-surface-container-high px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-highest active:scale-95"

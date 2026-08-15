@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/server-auth";
 import { SavedPageClient } from "./saved-page-client";
 
 export const metadata: Metadata = {
-  title: "Saved Pages | OnSite",
+  title: "Saved Pages",
 };
 
 export default async function SavedPage() {

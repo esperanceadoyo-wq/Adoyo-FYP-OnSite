@@ -26,12 +26,17 @@
 # misc
 .DS_Store
 *.pem
+/public/onsite-local-ca.cer
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+/.backend.*
+/.dev.*
+/.https-proxy.*
+/.tunnel.*
 
 # env files (can opt-in for committing if needed)
 .env*

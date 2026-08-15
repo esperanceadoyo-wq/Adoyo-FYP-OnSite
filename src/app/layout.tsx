@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { ViewTransition } from "react";
+import { AuthWelcomeToast } from "@/components/AuthWelcomeToast";
+import { BackToTopButton } from "@/components/BackToTopButton";
+import { RouteMotion } from "@/components/RouteMotion";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -39,7 +43,10 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {children}
+        <RouteMotion />
+        <AuthWelcomeToast />
+        <BackToTopButton />
+        <ViewTransition default="onsite-page">{children}</ViewTransition>
       </body>
     </html>
   );

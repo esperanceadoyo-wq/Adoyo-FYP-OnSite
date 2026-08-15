@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/server-auth";
 import { AddLocationForm } from "./add-location-form";
 
 export const metadata: Metadata = {
-  title: "Add New Space | OnSite",
+  title: "Add New Space",
 };
 
 export default async function AddNewLocationPage() {

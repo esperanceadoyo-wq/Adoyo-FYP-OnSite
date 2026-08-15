@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { LogoutButton } from "@/components/DashboardAuth";
 import { UserAvatar } from "@/components/UserAvatar";
 import type { AuthUser } from "@/lib/auth";
@@ -48,7 +49,7 @@ export function AppChrome({
   user: AuthUser;
 }) {
   return (
-    <main className="app-theme min-h-screen bg-background pb-24 text-on-background md:pb-8">
+    <main className="app-theme min-h-screen bg-background pb-8 text-on-background">
       <AppSidebar activeHref={activeHref} userRole={user.role} />
       <section className="md:ml-64">
         <AppHeader progress={progress} user={user} />
@@ -72,10 +73,9 @@ function AppSidebar({
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col border-r border-outline-variant bg-surface-container-lowest md:flex">
       <div className="flex flex-col gap-1 p-6">
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-on-surface">
-          <AppIcon className="h-6 w-6 text-primary" name="mapPin" />
-          ONSITE
-        </h1>
+        <Link aria-label="OnSite dashboard" href="/dashboard">
+          <BrandLogo className="h-8 w-32" priority />
+        </Link>
         <p className="text-[10px] font-medium leading-tight text-on-surface-variant">
           WHERE COMFORT MEETS CONNECTION
         </p>
@@ -124,6 +124,7 @@ function NavLink({
 }) {
   return (
     <Link
+      aria-current={active ? "page" : undefined}
       className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200 active:scale-95 ${
         active
           ? "bg-primary-container text-on-primary-container"

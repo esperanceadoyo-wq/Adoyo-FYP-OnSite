@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/server-auth";
 import { SettingsPageClient } from "./settings-page-client";
 
 export const metadata: Metadata = {
-  title: "Settings | OnSite",
+  title: "Settings",
 };
 
 export default async function SettingsPage() {

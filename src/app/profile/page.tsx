@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { AppChrome } from "@/components/AppChrome";
+import { BrandLogo } from "@/components/BrandLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import {
   getDashboardData,
@@ -9,7 +10,7 @@ import {
 import { requireAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
-  title: "Profile & My Journey | OnSite",
+  title: "Profile & My Journey",
 };
 
 export default async function ProfilePage() {
@@ -36,13 +37,8 @@ export default async function ProfilePage() {
       <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border border-[#1E293B] bg-[#0B1120] shadow-2xl">
         <header className="relative z-10 pb-10 pt-12 text-center">
           <div className="mb-3 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#22D3EE]/20 shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-              <span className="material-symbols-outlined text-4xl text-[#22D3EE]">
-                location_on
-              </span>
-            </div>
+            <BrandLogo className="h-[65px] w-64" priority />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">OnSite</h1>
           <p className="mt-1 text-sm text-[#94A3B8]">
             Where Comfort Meets Connection
           </p>

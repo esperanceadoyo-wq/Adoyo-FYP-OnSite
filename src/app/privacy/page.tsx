@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageShell } from "@/components/PageShell";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | OnSite",
+  title: "Privacy Policy",
 };
 
 export default function Page() {
@@ -41,7 +41,7 @@ export default function Page() {
         </div>
 
       </header>
-      <main className={"pt-32 pb-24 px-6 max-w-3xl mx-auto"}>
+      <main className={"pt-32 pb-12 px-6 max-w-3xl mx-auto"}>
 
         <section className={"mb-16"}>
 

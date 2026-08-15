@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AUTH_NOTICE_KEY } from "@/components/AuthWelcomeToast";
+import { startRouteMotion } from "@/components/RouteMotion";
 import {
   passwordRules,
   validateEmail,
@@ -77,7 +79,15 @@ export function SignupForm() {
         return;
       }
 
-      router.push(`/onboarding?name=${encodeURIComponent(data.user.name)}`);
+      sessionStorage.setItem(
+        AUTH_NOTICE_KEY,
+        JSON.stringify({ message: `Welcome to OnSite, ${data.user.name}!` }),
+      );
+      window.dispatchEvent(new Event(AUTH_NOTICE_KEY));
+      startRouteMotion();
+      router.push(`/onboarding?name=${encodeURIComponent(data.user.name)}`, {
+        transitionTypes: ["auth-success"],
+      });
       router.refresh();
     } catch {
       setError("Could not reach the auth server. Please start the backend and try again.");

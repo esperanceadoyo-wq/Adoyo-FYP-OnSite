@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AuthRecoveryShell } from "@/components/AuthRecoveryShell";
 import { ResetPasswordForm } from "@/components/ResetPasswordForm";
 
-export const metadata: Metadata = { title: "Reset Password | OnSite" };
+export const metadata: Metadata = { title: "Reset Password" };
 
 export default function ResetPasswordPage() {
   return (

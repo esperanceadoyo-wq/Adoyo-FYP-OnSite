@@ -5,7 +5,7 @@ import { getDashboardData } from "@/lib/dashboard-data";
 import { requireAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
-  title: "Notifications & Community | OnSite",
+  title: "Notifications & Community",
 };
 
 type FeedPost = {

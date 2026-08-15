@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { startRouteMotion } from "@/components/RouteMotion";
 import { UserAvatar } from "@/components/UserAvatar";
 import type { AuthUser } from "@/lib/auth";
 import type { UserProgress } from "@/lib/dashboard-data";
@@ -45,6 +46,7 @@ export function LogoutButton({
   async function handleLogout() {
     setIsSubmitting(true);
     await fetch("/api/auth/logout", { method: "POST" });
+    startRouteMotion();
     router.push("/login");
     router.refresh();
   }

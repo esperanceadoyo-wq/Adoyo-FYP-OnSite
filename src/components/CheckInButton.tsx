@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { startRouteMotion } from "@/components/RouteMotion";
 import { catalogSpacePath } from "@/lib/space-flow";
 import type { Visit } from "@/lib/visits";
 
@@ -85,6 +86,7 @@ export function CheckInButton({
             ),
             visitId: String(data.visit.id),
           });
+          startRouteMotion();
           router.push(
             `${catalogSpacePath(spaceSlug, "/verify")}?${query.toString()}`,
           );

@@ -3,7 +3,7 @@ import { PageShell } from "@/components/PageShell";
 import { requireAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
-  title: "OnSite | Onboarding",
+  title: "Onboarding",
 };
 
 export default async function Page() {

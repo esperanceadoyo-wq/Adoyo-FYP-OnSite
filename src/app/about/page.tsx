@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BrandLogo } from "@/components/BrandLogo";
 import { PageShell } from "@/components/PageShell";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export default function Page() {
   return (
     <PageShell
       bodyClassName={
-        "page-about min-h-screen flex flex-col selection:bg-primary/30 bg-white dark:bg-on-background text-on-surface dark:text-on-primary"
+        "page-about min-h-screen flex flex-col selection:bg-primary/30 bg-background text-on-background"
       }
     >
       <>
@@ -19,21 +20,7 @@ export default function Page() {
           }
         >
           <div className={"flex items-center gap-3"}>
-            <img
-              alt={"OnSite Logo"}
-              className={"h-10 w-auto object-contain"}
-              src={
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuAT0yxYTSQPCwMFy_60nHvvBwJ0iR1AszLo24KR9LWrY3juVuddxI8EIyODYE7IyySlLINRn1A-LWoV5KlUXeDwoEs0rEAFbzcLOYQ29p4rvODmmVyNhcmiOuuaf6o8Q4-dZ-SzUPrebk4ODorFxGLwuThwxPxbNL3f8OKq6l1IKoPSMF3b8o39MqcchIPKyejH1NPmv9tO-LxheZJuZWsIjpFZFs4viT5WnJk579syq-b2uKUj9wI3Xe8CkPxaIu7YwQ8"
-              }
-            />
-
-            <span
-              className={
-                "font-display font-bold text-xl text-on-surface dark:text-white"
-              }
-            >
-              OnSite
-            </span>
+            <BrandLogo className="h-10 w-36" priority />
           </div>
 
           <div className={"flex items-center gap-2"}>
@@ -74,7 +61,7 @@ export default function Page() {
             </button>
           </div>
         </header>
-        <main className={"flex-grow pt-32 pb-24 px-6 max-w-6xl mx-auto w-full"}>
+        <main className={"flex-grow pt-28 pb-12 px-6 max-w-6xl mx-auto w-full"}>
           <section className={"mb-20 text-center md:text-left"}>
             <h1
               className={
@@ -286,7 +273,7 @@ export default function Page() {
         </main>
         <footer
           className={
-            "mt-auto py-12 px-6 border-t border-surface-container-highest dark:border-white/10"
+            "mt-auto py-8 px-6 border-t border-surface-container-highest dark:border-white/10"
           }
         >
           <div
@@ -296,24 +283,10 @@ export default function Page() {
           >
             <div
               className={
-                "flex items-center gap-2 opacity-60 grayscale hover:grayscale-0 transition-all duration-500"
+                "flex items-center gap-2 opacity-70 grayscale hover:grayscale-0 transition-all duration-500"
               }
             >
-              <img
-                alt={"OnSite Logo"}
-                className={"h-6 w-auto"}
-                src={
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuAgC8efvrDN-Z6nbFXMw6ssCwDvsR4qtiypJAswdWdC75Kzj-qAei6S7SPz1oCthI2zlIxMsbFB8gWPG1lWrGb9vPwIeSU7vRmBs8L67kbMmNM4KGq5WYVwiGygpxQjNVLw8I29f0ZaRJY0qLaoMQbxouugLx0uWLJZvSH1xZq5JwZeoS-0rRYwqGecXJVSlFZp0lxSYjrajhpwopvmPzoTwnGYrh8XSXyCDQ5ISMDOYd-tQgVpoUgve6H7Wlip1pzYNWY"
-                }
-              />
-
-              <span
-                className={
-                  "font-display font-bold text-sm text-on-surface dark:text-white"
-                }
-              >
-                OnSite
-              </span>
+              <BrandLogo className="h-8 w-28" />
             </div>
 
             <p

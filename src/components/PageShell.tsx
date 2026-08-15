@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import type { MouseEvent, ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { startRouteMotion } from "@/components/RouteMotion";
 import { toggleTheme } from "@/lib/theme";
 
 type PageShellProps = {
@@ -10,6 +12,8 @@ type PageShellProps = {
 };
 
 export function PageShell({ bodyClassName, children }: PageShellProps) {
+  const router = useRouter();
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -45,18 +49,25 @@ export function PageShell({ bodyClassName, children }: PageShellProps) {
 
     const navigation = target.closest<HTMLElement>("[data-navigate]");
     if (navigation?.dataset.navigate) {
-      window.location.href = navigation.dataset.navigate;
+      event.preventDefault();
+      startRouteMotion();
+      router.push(navigation.dataset.navigate);
       return;
     }
 
     const action = target.closest<HTMLElement>("[data-action]");
     if (action?.dataset.action === "back") {
-      window.history.back();
+      startRouteMotion();
+      router.back();
       return;
     }
 
     if (action?.dataset.action === "save-preferences") {
-      await savePreferences(action);
+      await savePreferences(action, () => {
+        startRouteMotion();
+        router.push("/dashboard", { transitionTypes: ["step-forward"] });
+        router.refresh();
+      });
       return;
     }
 
@@ -111,7 +122,7 @@ function selectedValues(selector: string) {
   );
 }
 
-async function savePreferences(action: HTMLElement) {
+async function savePreferences(action: HTMLElement, onSuccess: () => void) {
   const comfort = selectedValue('[data-group="comfort"] .chip.active');
   const payload = {
     comfort_level: comfort,
@@ -152,7 +163,7 @@ async function savePreferences(action: HTMLElement) {
     }
 
     localStorage.setItem("onsite_user_preferences", JSON.stringify(payload));
-    window.location.href = "/dashboard";
+    onSuccess();
   } catch {
     setStatus(status, "Could not reach the backend. Please try again.", true);
   } finally {

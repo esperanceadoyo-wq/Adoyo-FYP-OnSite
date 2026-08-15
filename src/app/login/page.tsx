@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { LoginForm } from "@/components/LoginForm";
 import { PageShell } from "@/components/PageShell";
 
@@ -22,17 +23,15 @@ export default function Page() {
         </button>
 
         <div className={"px-8 pt-6"}>
-          <a href={"/"} className={"flex items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-primary transition-colors text-sm font-medium"}>
+          <a data-navigate="/" href={"/"} className={"flex items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-primary transition-colors text-sm font-medium"}>
             <span className={"material-symbols-outlined text-base"}>arrow_back</span>Back
           </a>
         </div>
 
         <div className={"flex flex-col items-center pt-8 pb-2"}>
 
-          <div className={"h-20 flex items-center justify-center"}>
-
-            <img alt={"OnSite Logo"} className={"h-full w-auto object-contain dark:brightness-0 dark:invert"} src={"https://lh3.googleusercontent.com/aida-public/AB6AXuBmDSy1WO0E9VNmeVRPytnlrv89Ddu3GvXdbuCd0gVMEmZtRQwVg7ZTvPXr-W8FEEKi9gXjzibjPeezrygpWJhNtf9AY9HJa9YqR9VAuEVMZiViT4oMjK_SsjqKYrkhhDdkzJpvQKnNXXb4Bu8K7LWxbppKfH6xDiPXPjDIWQSG9zoaklsixDShOSV4Mp3nbj9GLTNlkqbc7VnReGPL0MjBbrQYw_o0F0R1wjFWG1MR6aTEf9S9NYCg8b9rVEF0oOkcjrg"} />
-
+          <div className={"flex h-20 items-center justify-center"}>
+            <BrandLogo className="h-14 w-52" priority />
           </div>
 
         </div>
@@ -68,7 +67,7 @@ export default function Page() {
             <p className={"text-slate-600 dark:text-slate-400 text-sm"}>
                     Don&apos;t have an account? 
                     
-              <a className={"text-primary font-bold hover:underline ml-1"} href={"/signup"}>Create account</a>
+              <a className={"text-primary font-bold hover:underline ml-1"} data-navigate="/signup" href={"/signup"}>Create account</a>
 
             </p>
 

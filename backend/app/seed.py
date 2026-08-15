@@ -5,7 +5,7 @@ SPACES = [
     {
         "slug": "cyberjaya-community-library",
         "name": "Cyberjaya Community Library",
-        "description": "An architectural sanctuary for deep focus, reading, and individual study.",
+        "description": "Cyberjaya Community Library offers a calm, structured environment for students who need uninterrupted time to read, revise, or work independently. Natural light, quiet study areas, and dependable essentials make it easy to settle into longer focus sessions. It is especially suitable when you want a low-pressure public space that still feels purposeful and academically focused.",
         "category": "library",
         "address": "Persiaran Multimedia, Cyberjaya",
         "latitude": 2.9278,
@@ -24,7 +24,7 @@ SPACES = [
     {
         "slug": "bookxcess-tamarind",
         "name": "BookXcess @ Tamarind",
-        "description": "A scenic library-cafe hybrid with towering shelves and intimate reading nooks.",
+        "description": "BookXcess at Tamarind blends the atmosphere of a contemporary bookstore with the comfort of a relaxed cafe-style study space. Its tall shelves, tucked-away reading corners, and distinctive interior create an inspiring setting for reading, planning, or quiet creative work. The space works well for students who enjoy gentle background activity without the formality of a traditional library.",
         "category": "bookstore",
         "address": "Tamarind Square, Cyberjaya",
         "latitude": 2.9197,
@@ -42,7 +42,7 @@ SPACES = [
     {
         "slug": "cyberjaya-lake-gardens",
         "name": "Cyberjaya Lake Gardens",
-        "description": "A nature retreat for reflection and quiet walks among greenery and calm water.",
+        "description": "Cyberjaya Lake Gardens provides an open green retreat away from enclosed classrooms, busy cafes, and screen-heavy routines. Lakeside paths, shaded areas, and broad views make it a comfortable place for reflective walks, informal conversations, or a quiet mental reset. It is best suited to students who regain focus through fresh air, light movement, and a calmer natural environment.",
         "category": "park",
         "address": "Cyberjaya Lake Gardens, Cyberjaya",
         "latitude": 2.9361,
@@ -60,7 +60,7 @@ SPACES = [
     {
         "slug": "open-co-working-lounge",
         "name": "Open Co-Working Lounge",
-        "description": "Modern ergonomic desks and vibrant lighting for independent work and collaboration.",
+        "description": "Open Co-Working Lounge is a flexible shared workspace designed for independent study, project work, and small-group collaboration. Ergonomic desks, reliable connectivity, and accessible power points support longer sessions without sacrificing comfort. Its balanced social atmosphere gives students room to focus while still making it natural to exchange ideas or work alongside others.",
         "category": "lounge",
         "address": "Cyberjaya City Centre",
         "latitude": 2.9213,
@@ -79,7 +79,7 @@ SPACES = [
     {
         "slug": "zus-coffee",
         "name": "ZUS Coffee",
-        "description": "A tech-friendly specialty coffee shop for quick meetings and focused afternoon work.",
+        "description": "ZUS Coffee offers a modern, tech-friendly cafe environment for short study sessions, online tasks, and informal meetings. The steady background energy and convenient refreshments create a productive atmosphere without feeling overly formal. It is a practical choice for students who work well with moderate ambient noise and prefer an accessible stop between classes or activities.",
         "category": "cafe",
         "address": "Cyberjaya, Selangor",
         "latitude": 2.9224,
@@ -97,7 +97,7 @@ SPACES = [
     {
         "slug": "richiamo-coffee-tamarind",
         "name": "Richiamo Coffee Tamarind",
-        "description": "A cozy industrial cafe with local food and a relaxed social-work atmosphere.",
+        "description": "Richiamo Coffee Tamarind combines a warm industrial interior with a relaxed setting for meals, conversation, and casual work. Shared tables and a welcoming social atmosphere make it comfortable for meeting classmates or completing lighter tasks over food and drinks. It suits students who prefer a friendly community setting where productivity can happen alongside everyday social interaction.",
         "category": "cafe",
         "address": "Tamarind Square, Cyberjaya",
         "latitude": 2.9198,
@@ -115,7 +115,7 @@ SPACES = [
     {
         "slug": "coffee-bean-tea-leaf-dpulze",
         "name": "Coffee Bean & Tea Leaf",
-        "description": "A bustling coffee hub for casual catch-ups, short study sessions, and people-watching.",
+        "description": "Coffee Bean and Tea Leaf at DPULZE is a lively, centrally located cafe suited to casual catch-ups and shorter study sessions. Its mall setting provides easy access to refreshments and other facilities, while the regular flow of visitors keeps the atmosphere active. This space is a good fit for students who enjoy people around them and can concentrate comfortably in a busier environment.",
         "category": "cafe",
         "address": "DPULZE Shopping Centre, Cyberjaya",
         "latitude": 2.9219,
@@ -134,7 +134,7 @@ SPACES = [
     {
         "slug": "tamarind-square-courtyard",
         "name": "Tamarind Square Courtyard",
-        "description": "An open-air stepped courtyard that brings the community together in the evening.",
+        "description": "Tamarind Square Courtyard is an open-air gathering area shaped by greenery, stepped seating, and the surrounding creative retail spaces. It offers room to pause, talk with friends, or work informally while remaining connected to the wider community. The courtyard is especially inviting in the cooler parts of the day, when students can enjoy fresh air and a naturally social atmosphere.",
         "category": "courtyard",
         "address": "Tamarind Square, Cyberjaya",
         "latitude": 2.9197,
@@ -152,7 +152,7 @@ SPACES = [
     {
         "slug": "event-plaza-tamarind",
         "name": "Event Plaza Tamarind",
-        "description": "A vibrant public square hosting concerts, markets, and lively social gatherings.",
+        "description": "Event Plaza Tamarind is a flexible public square that becomes a focal point for markets, performances, and community activities. On quieter days it provides open space for meeting friends or taking a break, while scheduled events create a much livelier shared experience. It is best for students seeking energy, local culture, and opportunities to feel connected to the wider Cyberjaya community.",
         "category": "event venue",
         "address": "Tamarind Square, Cyberjaya",
         "latitude": 2.9196,

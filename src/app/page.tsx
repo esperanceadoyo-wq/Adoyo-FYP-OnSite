@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { BrandLogo } from "@/components/BrandLogo";
 import { PageShell } from "@/components/PageShell";
 
 export const metadata: Metadata = {
-  title: "OnSite | Where Comfort Meets Connection",
+  title: { absolute: "OnSite | Where Comfort Meets Connection" },
 };
 
 export default function Page() {
@@ -17,17 +18,17 @@ export default function Page() {
 
             <div className={"flex items-center gap-8"}>
 
-              <a className={"block"} href={"/"}>
+              <a className={"block"} data-navigate="/" href={"/"}>
 
-                <img alt={"OnSite Logo"} className={"h-20 w-auto object-contain logo-filter"} src={"https://lh3.googleusercontent.com/aida-public/AB6AXuCIZh21qx7r-BIZvnEGbyfIJ-1HwPfJ10xkTyWuWnG-JFoNYzh_zjkLyljTgScVsebRuVQ4peABcooXkp-O5BRaZuWq9VTQKuJZ0K1mRd0F4ErUQvd5sMMr-gEBTiXuKpoM0xPs9C-GuhS9WF1fcPdFRKnbSBtHr6nlDp3JgB8Ux_tr_F7fy0N0qLHfu7L6f4vsVW06LIIRQrD4gAkqfzS2PnEyi9CoUWTXHoL5SGkb8M-e6b8Lc8UEfny8pBjFvRnBh6w"} />
+                <BrandLogo className="h-12 w-44" priority />
 
               </a>
 
               <div className={"hidden md:flex items-center gap-6"}>
 
-                <a className={"text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"} href={"/about"}>About</a>
+                <a className={"text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"} data-navigate="/about" href={"/about"}>About</a>
 
-                <a className={"text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"} href={"/privacy"}>Privacy</a>
+                <a className={"text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"} data-navigate="/privacy" href={"/privacy"}>Privacy</a>
 
               </div>
 
@@ -43,9 +44,9 @@ export default function Page() {
 
               </button>
 
-              <a href={"/login"} className={"text-sm font-bold text-slate-900 dark:text-slate-200 px-4 py-2 hover:text-primary transition-colors inline-block align-middle mt-2"}>Log In</a>
+              <a data-navigate="/login" href={"/login"} className={"text-sm font-bold text-slate-900 dark:text-slate-200 px-4 py-2 hover:text-primary transition-colors inline-block align-middle mt-2"}>Log In</a>
 
-              <a href={"/signup"} className={"bg-primary text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95 inline-block text-center"}>Sign Up</a>
+              <a data-navigate="/signup" href={"/signup"} className={"bg-primary text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95 inline-block text-center"}>Sign Up</a>
 
             </div>
 
@@ -75,9 +76,9 @@ export default function Page() {
 
             <div className={"flex flex-wrap gap-4"}>
 
-              <a href={"/signup"} className={"bg-primary text-white px-8 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95 text-center"}>Get Started</a>
+              <a data-navigate="/signup" href={"/signup"} className={"bg-primary text-white px-8 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95 text-center"}>Get Started</a>
 
-              <a href={"/about"} className={"bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95 text-center"}>Learn More</a>
+              <a data-navigate="/about" href={"/about"} className={"bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95 text-center"}>Learn More</a>
 
             </div>
 
@@ -301,9 +302,9 @@ export default function Page() {
 
               <div className={"flex flex-wrap gap-4 justify-center md:justify-start"}>
 
-                <a href={"/signup"} className={"bg-white text-primary px-10 py-4 rounded-xl font-bold hover:shadow-xl transition-all active:scale-95 text-center"}>Sign Up Now</a>
+                <a data-navigate="/signup" href={"/signup"} className={"bg-white text-primary px-10 py-4 rounded-xl font-bold hover:shadow-xl transition-all active:scale-95 text-center"}>Sign Up Now</a>
 
-                <a href={"/login"} className={"bg-primary-fixed/20 dark:bg-white/10 border border-white/20 text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 dark:hover:bg-white/20 transition-all text-center"}>Log In</a>
+                <a data-navigate="/login" href={"/login"} className={"bg-primary-fixed/20 dark:bg-white/10 border border-white/20 text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 dark:hover:bg-white/20 transition-all text-center"}>Log In</a>
 
               </div>
 
@@ -327,8 +328,8 @@ export default function Page() {
         <div className={"max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12 justify-center"}>
 
           <div className={"col-span-2"}>
-            <a className={"text-2xl font-bold text-slate-900 dark:text-white mb-8 block"} href={"/"}>
-              <img alt={"OnSite Logo"} className={"h-14 w-auto object-contain logo-filter"} src={"https://lh3.googleusercontent.com/aida-public/AB6AXuAyHZfxA2o-JUAJu78bl7YpJjegKd9Ggb4odQ7ZNgt9QPFo3Q1LT4XrOga_pmxAflzzUxuwjzlNW8umKUVifTRdM9KDwVpjMtsoKwaOki1FWeBiV9W3jt1ej2Loy0xGIqsN6qsz4n1VO6R7meFl20fsIOsENo2l80i8QwvFgWpyClBT5bwkYGQj3VDqwrBp4m6pqCmxRqjzDgZekRTw4LX7E16W3R2P27ofMbGQCTcuQd7Z9lUW8Q7OmuhNE4ZdBiZxWvw"} />
+            <a className={"text-2xl font-bold text-slate-900 dark:text-white mb-8 block"} data-navigate="/" href={"/"}>
+              <BrandLogo className="h-12 w-44" />
             </a>
 
             <p className={"text-slate-500 text-sm max-w-xs leading-relaxed mb-8"}>Empowering international students to find their place, their people, and their potential in a new environment.</p>
@@ -350,10 +351,10 @@ export default function Page() {
             <h4 className={"font-bold text-slate-900 dark:text-white mb-6"}>Company</h4>
             <ul className={"space-y-4 text-sm text-slate-500"}>
               <li>
-                <a className={"hover:text-primary transition-colors"} href={"/about"}>About Us</a>
+                <a className={"hover:text-primary transition-colors"} data-navigate="/about" href={"/about"}>About Us</a>
               </li>
               <li>
-                <a className={"hover:text-primary transition-colors"} href={"/privacy"}>Privacy Policy</a>
+                <a className={"hover:text-primary transition-colors"} data-navigate="/privacy" href={"/privacy"}>Privacy Policy</a>
               </li>
             </ul>
           </div>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AUTH_NOTICE_KEY } from "@/components/AuthWelcomeToast";
+import { startRouteMotion } from "@/components/RouteMotion";
 import { validateEmail, type AuthResponse } from "@/lib/auth";
 
 export function LoginForm() {
@@ -37,7 +39,15 @@ export function LoginForm() {
         return;
       }
 
-      router.push(searchParams.get("next") || "/dashboard");
+      sessionStorage.setItem(
+        AUTH_NOTICE_KEY,
+        JSON.stringify({ message: `Welcome back, ${data.user.name}!` }),
+      );
+      window.dispatchEvent(new Event(AUTH_NOTICE_KEY));
+      startRouteMotion();
+      router.push(searchParams.get("next") || "/dashboard", {
+        transitionTypes: ["auth-success"],
+      });
       router.refresh();
     } catch {
       setError("Could not reach the auth server. Please start the backend and try again.");

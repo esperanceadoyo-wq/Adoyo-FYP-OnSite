@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/server-auth";
 import { AdminLocationsTable } from "./admin-locations-table";
 
 export const metadata: Metadata = {
-  title: "Admin Panel - Locations Management | OnSite",
+  title: "Admin Panel - Locations Management",
 };
 
 type StatCard = {

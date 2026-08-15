@@ -200,6 +200,8 @@ def test_space_catalog_returns_display_metadata_and_supports_filters(client):
     assert all(space["image_url"] for space in spaces)
     assert all("/aida-public/" in space["image_url"] for space in spaces)
     assert all(space["image_alt"] for space in spaces)
+    assert all(len(space["description"]) >= 240 for space in spaces)
+    assert all(space["description"].count(".") >= 3 for space in spaces)
 
     cafes = client.get("/api/spaces?category=cafe").get_json()["spaces"]
     private_spaces = client.get(
