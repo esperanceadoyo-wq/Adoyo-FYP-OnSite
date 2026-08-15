@@ -38,6 +38,7 @@ export default function RootLayout({
   return (
     <html
       className="scroll-smooth bg-background text-on-background transition-colors duration-300"
+      data-scroll-behavior="smooth"
       lang="en"
       suppressHydrationWarning
     >
