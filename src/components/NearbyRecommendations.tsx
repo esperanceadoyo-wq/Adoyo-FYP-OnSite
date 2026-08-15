@@ -7,6 +7,7 @@ import type { SpaceRecommendation } from "@/lib/recommendations";
 import { catalogSpacePath } from "@/lib/space-flow";
 
 const MAX_USEFUL_ACCURACY_METERS = 1000;
+const RECENT_LOCATION_MAX_AGE_MS = 5 * 60 * 1000;
 
 type LocationStatus =
   | "idle"
@@ -33,58 +34,55 @@ export function NearbyRecommendations({ mood }: { mood: string | null }) {
     }
 
     setStatus("requesting");
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        if (position.coords.accuracy > MAX_USEFUL_ACCURACY_METERS) {
-          setStatus("inaccurate");
-          return;
-        }
+    let position: GeolocationPosition;
+    try {
+      position = await getDashboardPosition();
+    } catch (error) {
+      const geolocationError = error as GeolocationPositionError;
+      if (geolocationError.code === geolocationError.PERMISSION_DENIED) {
+        setStatus("denied");
+      } else if (geolocationError.code === geolocationError.TIMEOUT) {
+        setStatus("timeout");
+      } else {
+        setStatus("unavailable");
+      }
+      return;
+    }
 
-        try {
-          const response = await fetch("/api/recommendations", {
-            body: JSON.stringify({
-              latitude: position.coords.latitude,
-              limit: 3,
-              location_consent: true,
-              longitude: position.coords.longitude,
-              ...(mood ? { mood } : {}),
-            }),
-            headers: { "content-type": "application/json" },
-            method: "POST",
-          });
-          const data = (await response.json()) as {
-            error?: string;
-            recommendations?: SpaceRecommendation[];
-          };
+    if (position.coords.accuracy > MAX_USEFUL_ACCURACY_METERS) {
+      setStatus("inaccurate");
+      return;
+    }
 
-          if (!response.ok) {
-            setError(data.error || "Nearby recommendations are unavailable.");
-            setStatus("error");
-            return;
-          }
+    try {
+      const response = await fetch("/api/recommendations", {
+        body: JSON.stringify({
+          latitude: position.coords.latitude,
+          limit: 3,
+          location_consent: true,
+          longitude: position.coords.longitude,
+          ...(mood ? { mood } : {}),
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        recommendations?: SpaceRecommendation[];
+      };
 
-          setRecommendations(data.recommendations ?? []);
-          setStatus("success");
-        } catch {
-          setError("Nearby recommendations are unavailable.");
-          setStatus("error");
-        }
-      },
-      (geolocationError) => {
-        if (geolocationError.code === geolocationError.PERMISSION_DENIED) {
-          setStatus("denied");
-        } else if (geolocationError.code === geolocationError.TIMEOUT) {
-          setStatus("timeout");
-        } else {
-          setStatus("unavailable");
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 10000,
-      },
-    );
+      if (!response.ok) {
+        setError(data.error || "Nearby recommendations are unavailable.");
+        setStatus("error");
+        return;
+      }
+
+      setRecommendations(data.recommendations ?? []);
+      setStatus("success");
+    } catch {
+      setError("Nearby recommendations are unavailable.");
+      setStatus("error");
+    }
   }
 
   return (
@@ -138,6 +136,48 @@ export function NearbyRecommendations({ mood }: { mood: string | null }) {
       ) : null}
     </section>
   );
+}
+
+async function getDashboardPosition() {
+  let initialPosition: GeolocationPosition | null = null;
+
+  try {
+    initialPosition = await getCurrentPosition({
+      enableHighAccuracy: false,
+      maximumAge: RECENT_LOCATION_MAX_AGE_MS,
+      timeout: 8000,
+    });
+    if (initialPosition.coords.accuracy <= MAX_USEFUL_ACCURACY_METERS) {
+      return initialPosition;
+    }
+  } catch (error) {
+    const geolocationError = error as GeolocationPositionError;
+    if (geolocationError.code === geolocationError.PERMISSION_DENIED) throw error;
+  }
+
+  try {
+    const precisePosition = await getCurrentPosition({
+      enableHighAccuracy: true,
+      maximumAge: RECENT_LOCATION_MAX_AGE_MS,
+      timeout: 12000,
+    });
+    if (
+      !initialPosition ||
+      precisePosition.coords.accuracy < initialPosition.coords.accuracy
+    ) {
+      return precisePosition;
+    }
+  } catch (error) {
+    if (!initialPosition) throw error;
+  }
+
+  return initialPosition as GeolocationPosition;
+}
+
+function getCurrentPosition(options: PositionOptions) {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
 }
 
 function NearbyCard({

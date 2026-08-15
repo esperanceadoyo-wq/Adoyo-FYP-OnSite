@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AUTH_NOTICE_KEY } from "@/components/AuthWelcomeToast";
+import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { startRouteMotion } from "@/components/RouteMotion";
 import { validateEmail, type AuthResponse } from "@/lib/auth";
 
@@ -92,7 +93,7 @@ export function LoginForm() {
         <div className="relative flex w-full items-center">
           <input
             autoComplete="current-password"
-            className="form-input flex h-14 w-full rounded-xl border border-slate-200 bg-white p-[15px] pr-12 text-base font-normal text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-500"
+            className="form-input flex h-14 w-full rounded-xl border border-slate-200 bg-white p-[15px] pr-20 text-base font-normal text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-500"
             name="password"
             onChange={(event) => {
               setPassword(event.target.value);
@@ -103,17 +104,10 @@ export function LoginForm() {
             type={showPassword ? "text" : "password"}
             value={password}
           />
-          <button
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            aria-pressed={showPassword}
-            className="absolute right-4 text-slate-400 transition-colors hover:text-primary dark:text-slate-500"
-            onClick={() => setShowPassword((current) => !current)}
-            type="button"
-          >
-            <span className="material-symbols-outlined">
-              {showPassword ? "visibility_off" : "visibility"}
-            </span>
-          </button>
+          <PasswordVisibilityButton
+            isVisible={showPassword}
+            onToggle={() => setShowPassword((current) => !current)}
+          />
         </div>
       </div>
 

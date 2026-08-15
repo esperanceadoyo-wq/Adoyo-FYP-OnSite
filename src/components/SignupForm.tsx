@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AUTH_NOTICE_KEY } from "@/components/AuthWelcomeToast";
+import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { startRouteMotion } from "@/components/RouteMotion";
 import {
   passwordRules,
@@ -147,7 +148,7 @@ export function SignupForm() {
         <div className="relative flex items-center">
           <input
             autoComplete="new-password"
-            className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-12 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+            className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-20 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
             name="password"
             onChange={(event) => updateField("password", event.target.value)}
             placeholder="Create a password"
@@ -155,17 +156,10 @@ export function SignupForm() {
             type={showPassword ? "text" : "password"}
             value={fields.password}
           />
-          <button
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            aria-pressed={showPassword}
-            className="absolute right-3 text-slate-400 transition-colors hover:text-primary dark:text-slate-500"
-            onClick={() => setShowPassword((current) => !current)}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-xl">
-              {showPassword ? "visibility_off" : "visibility"}
-            </span>
-          </button>
+          <PasswordVisibilityButton
+            isVisible={showPassword}
+            onToggle={() => setShowPassword((current) => !current)}
+          />
         </div>
         <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
           {passwordRules.map((rule) => {
@@ -192,7 +186,7 @@ export function SignupForm() {
         <div className="relative flex items-center">
           <input
             autoComplete="new-password"
-            className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-12 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+            className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-20 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
             name="confirm_password"
             onChange={(event) =>
               updateField("confirmPassword", event.target.value)
@@ -202,21 +196,11 @@ export function SignupForm() {
             type={showConfirmPassword ? "text" : "password"}
             value={fields.confirmPassword}
           />
-          <button
-            aria-label={
-              showConfirmPassword
-                ? "Hide confirmed password"
-                : "Show confirmed password"
-            }
-            aria-pressed={showConfirmPassword}
-            className="absolute right-3 text-slate-400 transition-colors hover:text-primary dark:text-slate-500"
-            onClick={() => setShowConfirmPassword((current) => !current)}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-xl">
-              {showConfirmPassword ? "visibility_off" : "visibility"}
-            </span>
-          </button>
+          <PasswordVisibilityButton
+            isVisible={showConfirmPassword}
+            label="confirmed password"
+            onToggle={() => setShowConfirmPassword((current) => !current)}
+          />
         </div>
         {!passwordsMatch ? (
           <p className="mt-1 text-xs font-medium text-red-500">
