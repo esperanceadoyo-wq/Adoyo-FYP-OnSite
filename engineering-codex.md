@@ -84,6 +84,15 @@ Before changing framework conventions, read the relevant local Next.js 16 docume
 
 ---
 
+## OnSite Guide Boundary
+1. The chatbot is a deterministic OnSite support feature, not a general-purpose assistant. Keep matching and answer construction in the Flask service.
+2. Answers may use public active-space and achievement data. Personalized answers may use only the current signed session's progress, preferences, role, and saved-space totals.
+3. Never send or expose precise coordinates, reflection text, password data, another user's records, or unauthorized admin information.
+4. Chat links must come from controlled OnSite route definitions. Render answers as text, never generated HTML.
+5. Do not add external AI providers, web search, API keys, chat persistence, or a database conversation model without an explicit scope change.
+
+---
+
 ## Core Principles
 1. **Root Cause Over Surface Fixes:** Fix the data model or state synchronization over adding arbitrary timeouts or guards.
 2. **Mobile-First Simplicity First:** Keep layout rendering lightweight for smooth performance on mobile network connections.

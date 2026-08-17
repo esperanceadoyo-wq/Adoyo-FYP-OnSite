@@ -719,3 +719,58 @@ a { cursor: pointer; }
 .dark .page-about .icon-moon {
   opacity: 1;
 }
+
+@keyframes onsite-chat-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes onsite-chat-pulse {
+  0% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes onsite-chat-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.onsite-chat-launcher {
+  animation: onsite-chat-float 3s ease-in-out infinite;
+}
+
+.onsite-chat-pulse {
+  animation: onsite-chat-pulse 2.2s ease-out infinite;
+}
+
+.onsite-chat-typing {
+  animation: onsite-chat-typing 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onsite-chat-launcher,
+  .onsite-chat-pulse,
+  .onsite-chat-typing {
+    animation: none;
+  }
+}

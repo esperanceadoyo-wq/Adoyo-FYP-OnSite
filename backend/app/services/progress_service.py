@@ -5,6 +5,11 @@ from sqlalchemy import func
 from ..extensions import db
 from ..models import Achievement, Reflection, Space, UserAchievement, Visit, isoformat
 
+VISIT_XP = 20
+REFLECTION_XP = 15
+XP_PER_LEVEL = 200
+WEEKLY_VISIT_TARGET = 5
+
 
 def award_eligible_achievements(user_id: int) -> list[UserAchievement]:
     visit_count = db.session.scalar(
@@ -77,8 +82,8 @@ def get_progress(user_id: int, now: datetime | None = None) -> dict:
         for achievement in all_achievements
     ]
     achievement_points = sum(row.Achievement.points for row in awarded_rows)
-    xp = visit_count * 20 + reflection_count * 15 + achievement_points
-    level = xp // 200 + 1
+    xp = visit_count * VISIT_XP + reflection_count * REFLECTION_XP + achievement_points
+    level = xp // XP_PER_LEVEL + 1
     visit_dates = [
         visited_at.date()
         for visited_at in db.session.scalars(
@@ -89,7 +94,7 @@ def get_progress(user_id: int, now: datetime | None = None) -> dict:
     ]
     week_start = now.date() - timedelta(days=now.weekday())
     weekly_visits = sum(visited_at >= week_start for visited_at in visit_dates)
-    weekly_target = 5
+    weekly_target = WEEKLY_VISIT_TARGET
     locked_milestones = [
         milestone for milestone in achievement_progress if not milestone["unlocked"]
     ]
@@ -99,8 +104,8 @@ def get_progress(user_id: int, now: datetime | None = None) -> dict:
         "reflections": reflection_count,
         "xp": xp,
         "level": level,
-        "current_level_xp": xp % 200,
-        "next_level_xp": 200,
+        "current_level_xp": xp % XP_PER_LEVEL,
+        "next_level_xp": XP_PER_LEVEL,
         "current_streak": _current_streak(visit_dates, now.date()),
         "weekly_goal": {
             "completed": weekly_visits,
@@ -183,7 +188,7 @@ def _recent_activity(user_id: int) -> list[dict]:
             "occurred_at": isoformat(visit.visited_at),
             "space": space.to_dict(),
             "title": f"Visited {space.name}",
-            "xp": 20,
+            "xp": VISIT_XP,
         }
         for visit, space in visit_rows
     ]
@@ -194,7 +199,7 @@ def _recent_activity(user_id: int) -> list[dict]:
             "occurred_at": isoformat(reflection.created_at),
             "space": space.to_dict(),
             "title": f"Reflected on {space.name}",
-            "xp": 15,
+            "xp": REFLECTION_XP,
         }
         for reflection, space in reflection_rows
     )

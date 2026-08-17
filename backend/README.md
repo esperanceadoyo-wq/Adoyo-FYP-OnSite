@@ -31,6 +31,7 @@ Demo credentials after seeding:
 
 - `POST /api/auth/register`, `/login`, `/logout`, `/forgot-password`, `/reset-password`
 - `GET /api/auth/me`
+- `POST /api/chat`
 - `PATCH /api/auth/account`
 - `GET`, `PUT /api/profile`
 - `GET`, `POST /api/profile/avatar`
@@ -67,6 +68,12 @@ email delivery service is connected.
 Account settings update the user and profile in one transaction. Changing an
 email address or password requires the current password; name and privacy-only
 changes do not. Emails are normalized before duplicate checks.
+
+The OnSite Guide is a deterministic application-support chatbot. It matches
+free-text questions to curated OnSite topics and may use active spaces or the
+current authenticated user's progress, preferences, and saved-space count.
+It has no external AI service, web access, API key, or persistent conversation
+history. Questions outside the OnSite scope receive a fixed refusal.
 
 ## Database migrations
 
