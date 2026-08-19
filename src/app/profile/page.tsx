@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppChrome } from "@/features/navigation/components/AppChrome";
 import { BrandLogo } from "@/shared/components/BrandLogo";
@@ -6,9 +8,17 @@ import { UserAvatar } from "@/features/profile/components/UserAvatar";
 import {
   getDashboardData,
   type AchievementProgress,
+  type UserProfile,
 } from "@/features/dashboard/dashboard-data";
 import { requireAuth } from "@/features/auth/server-auth";
 import { levelName } from "@/features/progress/levels";
+import {
+  getReflectionHistory,
+  getVisitedSpaceIds,
+  selectStretchSpace,
+  type ReflectionHistoryItem,
+} from "@/features/profile/profile";
+import { getSpaceCatalog, type Space } from "@/features/spaces/spaces";
 
 export const metadata: Metadata = {
   title: "Profile & My Journey",
@@ -16,7 +26,13 @@ export const metadata: Metadata = {
 
 export default async function ProfilePage() {
   const user = await requireAuth("/profile");
-  const { progress } = await getDashboardData();
+  const [dashboardData, reflectionHistory, catalog, visitedSpaceIds] = await Promise.all([
+    getDashboardData(),
+    getReflectionHistory(),
+    getSpaceCatalog(),
+    getVisitedSpaceIds(),
+  ]);
+  const { profile, progress } = dashboardData;
   const level = progress?.level ?? 1;
   const currentXp = progress?.current_level_xp ?? 0;
   const nextXp = progress?.next_level_xp ?? 200;
@@ -31,6 +47,12 @@ export default async function ProfilePage() {
     target: 5,
   };
   const recentActivity = progress?.recent_activity ?? [];
+  const stretchSpace = selectStretchSpace({
+    profile,
+    reflections: reflectionHistory.reflections,
+    spaces: catalog.spaces,
+    visitedSpaceIds,
+  });
 
   return (
     <AppChrome activeHref="/profile" progress={progress} user={user}>
@@ -173,11 +195,197 @@ export default async function ProfilePage() {
               </div>
             </section>
           </div>
+
+          <section className="rounded-xl border border-[#1E293B] bg-[#161E2E] p-6 shadow-[0_0_20px_rgba(34,211,238,0.06)] md:p-8">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Past Reflections</h2>
+                <p className="mt-1 text-sm text-[#94A3B8]">
+                  Revisit the spaces you explored and the thoughts you recorded.
+                </p>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest text-[#22D3EE]">
+                {reflectionHistory.reflections.length} shown
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+              <div className="min-w-0 divide-y divide-[#1E293B]">
+                {reflectionHistory.reflections.length ? (
+                  reflectionHistory.reflections.map((reflection) => (
+                    <ReflectionHistoryRow
+                      key={reflection.id}
+                      reflection={reflection}
+                    />
+                  ))
+                ) : (
+                  <div className="flex min-h-44 items-center justify-center py-8 text-center">
+                    <div className="max-w-sm">
+                      <p className="font-semibold text-white">
+                        {reflectionHistory.error
+                          ? "Reflections are unavailable right now"
+                          : "No reflections yet"}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-[#94A3B8]">
+                        {reflectionHistory.error ??
+                          "Complete a verified visit and reflection to begin your journey history."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <StretchSuggestion profile={profile} space={stretchSpace} />
+            </div>
+          </section>
         </div>
       </div>
       </div>
     </AppChrome>
   );
+}
+
+function ReflectionHistoryRow({
+  reflection,
+}: {
+  reflection: ReflectionHistoryItem;
+}) {
+  const ratings = [
+    { label: "Comfort", value: reflection.comfort_rating },
+    { label: "Social", value: reflection.social_rating },
+    { label: "Learning", value: reflection.learning_value_rating },
+  ].filter((rating): rating is { label: string; value: number } =>
+    Number.isInteger(rating.value),
+  );
+
+  return (
+    <article className="py-5 first:pt-0 last:pb-0">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <Link
+          className="font-bold text-white transition-colors hover:text-[#22D3EE]"
+          href={`/spaces/${reflection.space.slug}`}
+        >
+          {reflection.space.name}
+        </Link>
+        <time
+          className="shrink-0 text-xs font-medium text-[#94A3B8]"
+          dateTime={reflection.created_at}
+        >
+          {formatReflectionDate(reflection.created_at)}
+        </time>
+      </div>
+      <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#CBD5E1]">
+        {reflection.reflection_text || "No written note was added for this visit."}
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {ratings.map((rating) => (
+          <span className="text-xs text-[#94A3B8]" key={rating.label}>
+            {rating.label}{" "}
+            <strong className="font-bold text-[#22D3EE]">
+              {rating.value}/5
+            </strong>
+          </span>
+        ))}
+        {reflection.would_return !== null ? (
+          <span className="text-xs font-semibold text-[#94A3B8]">
+            {reflection.would_return ? "Would visit again" : "Would try somewhere new"}
+          </span>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function StretchSuggestion({
+  profile,
+  space,
+}: {
+  profile: UserProfile | null;
+  space: Space | null;
+}) {
+  return (
+    <aside className="border-t border-[#1E293B] pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#F59E0B]">
+        Try Something New
+      </p>
+      {space ? (
+        <>
+          {space.image_url ? (
+            <div className="relative mt-4 aspect-[16/9] overflow-hidden rounded-lg">
+              <Image
+                alt={space.image_alt || space.name}
+                className="object-cover"
+                fill
+                sizes="(min-width: 1024px) 304px, 100vw"
+                src={space.image_url}
+              />
+            </div>
+          ) : null}
+          <h3 className="mt-4 text-lg font-bold text-white">{space.name}</h3>
+          <p className="mt-2 text-sm leading-6 text-[#94A3B8]">
+            {stretchSuggestionReason(space, profile)}
+          </p>
+          <Link
+            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#22D3EE] px-4 py-2 text-sm font-bold text-[#0B1120] transition-all hover:brightness-110 active:scale-[0.98]"
+            href={`/spaces/${space.slug}`}
+          >
+            View Suggested Space
+          </Link>
+        </>
+      ) : (
+        <>
+          <h3 className="mt-4 font-bold text-white">Keep exploring</h3>
+          <p className="mt-2 text-sm leading-6 text-[#94A3B8]">
+            Browse the catalog to find a setting that feels different from your usual choices.
+          </p>
+          <Link
+            className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-[#22D3EE]/50 px-4 py-2 text-sm font-bold text-[#22D3EE] transition-colors hover:bg-[#22D3EE]/10"
+            href="/explore"
+          >
+            Explore Spaces
+          </Link>
+        </>
+      )}
+    </aside>
+  );
+}
+
+function stretchSuggestionReason(
+  space: Space,
+  profile: UserProfile | null,
+) {
+  const preferredTypes = profile?.preferred_space_types ?? [];
+  const preferredIntensity = profile?.preferred_social_intensity;
+  const isNewType = !preferredTypes
+    .map((type) => type.toLowerCase())
+    .includes(space.category.toLowerCase());
+
+  if (preferredTypes.length && isNewType) {
+    return `Step beyond your usual ${preferredTypes.join(" or ")} choices with this ${space.category} setting.`;
+  }
+  if (
+    preferredIntensity !== null &&
+    preferredIntensity !== undefined &&
+    space.social_intensity > preferredIntensity
+  ) {
+    return "Try a more social atmosphere and see how a livelier space changes your experience.";
+  }
+  if (
+    preferredIntensity !== null &&
+    preferredIntensity !== undefined &&
+    space.social_intensity < preferredIntensity
+  ) {
+    return "Try a calmer atmosphere and notice how a quieter setting affects your focus.";
+  }
+  return `Explore a different ${space.category} atmosphere and add a fresh perspective to your journey.`;
+}
+
+function formatReflectionDate(value: string) {
+  return new Intl.DateTimeFormat("en-MY", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
 }
 
 function JourneyStat({
