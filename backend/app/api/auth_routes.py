@@ -42,7 +42,7 @@ def register():
     if db.session.scalar(db.select(User).where(db.func.lower(User.email) == email)):
         return jsonify({"error": "An account with that email already exists."}), 409
 
-    user = User(name=name, email=email)
+    user = User(name=name, email=email, role="student")
     user.set_password(password)
     db.session.add(user)
     db.session.flush()
@@ -58,7 +58,9 @@ def login():
     payload = request.get_json(silent=True) or {}
     email = str(payload.get("email", "")).strip().lower()
     password = str(payload.get("password", ""))
-    user = db.session.scalar(db.select(User).where(User.email == email))
+    user = db.session.scalar(
+        db.select(User).where(db.func.lower(User.email) == email)
+    )
 
     if user is None or not user.check_password(password):
         return jsonify({"error": "Invalid email or password."}), 401

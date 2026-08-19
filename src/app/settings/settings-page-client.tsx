@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserAvatar } from "@/features/profile/components/UserAvatar";
 import type { AuthUser } from "@/features/auth/auth";
 import { validateEmail, validateName, validatePassword } from "@/features/auth/auth";
@@ -25,6 +25,8 @@ export function SettingsPageClient({
   const theme = useTheme();
   const [accountName, setAccountName] = useState(name);
   const [accountEmail, setAccountEmail] = useState(email);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showOnLeaderboard, setShowOnLeaderboard] = useState(leaderboardVisible);
   const [showActivity, setShowActivity] = useState(activityVisible);
@@ -42,6 +44,13 @@ export function SettingsPageClient({
   const [avatarStatus, setAvatarStatus] = useState("");
   const [avatarError, setAvatarError] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [saveNotice, setSaveNotice] = useState("");
+
+  useEffect(() => {
+    if (!saveNotice) return;
+    const timeout = window.setTimeout(() => setSaveNotice(""), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [saveNotice]);
 
   function selectAvatar(file: File | undefined) {
     setAvatarStatus("");
@@ -92,6 +101,7 @@ export function SettingsPageClient({
   }
 
   async function saveChanges() {
+    setSaveNotice("");
     const normalizedName = accountName.trim();
     const normalizedEmail = accountEmail.trim().toLowerCase();
 
@@ -103,7 +113,11 @@ export function SettingsPageClient({
       window.alert("Enter a valid email address.");
       return;
     }
-    if (newPassword && !validatePassword(newPassword)) {
+    if (isChangingPassword && !newPassword) {
+      window.alert("Enter a new password or cancel the password change.");
+      return;
+    }
+    if (isChangingPassword && !validatePassword(newPassword)) {
       window.alert(
         "Password must be at least 8 characters and include uppercase, lowercase, and a number.",
       );
@@ -111,14 +125,10 @@ export function SettingsPageClient({
     }
 
     const sensitiveChange =
-      normalizedEmail !== savedSettings.email || Boolean(newPassword);
-    let currentPassword: string | undefined;
-    if (sensitiveChange) {
-      const suppliedPassword = window.prompt(
-        "Enter your current password to confirm this account change.",
-      );
-      if (suppliedPassword === null) return;
-      currentPassword = suppliedPassword;
+      normalizedEmail !== savedSettings.email || isChangingPassword;
+    if (sensitiveChange && !currentPassword) {
+      window.alert("Enter your current password to confirm this account change.");
+      return;
     }
 
     setIsSaving(true);
@@ -126,12 +136,12 @@ export function SettingsPageClient({
       const response = await fetch("/api/auth/account", {
         body: JSON.stringify({
           activity_visible: showActivity,
-          current_password: currentPassword,
+          ...(sensitiveChange ? { current_password: currentPassword } : {}),
           email: normalizedEmail,
           leaderboard_visible: showOnLeaderboard,
           location_consent: allowLocation,
           name: normalizedName,
-          ...(newPassword ? { new_password: newPassword } : {}),
+          ...(isChangingPassword ? { new_password: newPassword } : {}),
         }),
         headers: { "content-type": "application/json" },
         method: "PATCH",
@@ -160,8 +170,10 @@ export function SettingsPageClient({
       setShowActivity(nextSavedSettings.activityVisible);
       setAllowLocation(nextSavedSettings.locationConsent);
       setSavedSettings(nextSavedSettings);
+      setCurrentPassword("");
+      setIsChangingPassword(false);
       setNewPassword("");
-      window.alert("Settings saved successfully.");
+      setSaveNotice("Settings saved successfully.");
       router.refresh();
     } catch {
       window.alert("Could not reach the backend. Please try again.");
@@ -171,8 +183,11 @@ export function SettingsPageClient({
   }
 
   function resetChanges() {
+    setSaveNotice("");
     setAccountName(savedSettings.name);
     setAccountEmail(savedSettings.email);
+    setCurrentPassword("");
+    setIsChangingPassword(false);
     setNewPassword("");
     setShowOnLeaderboard(savedSettings.leaderboardVisible);
     setShowActivity(savedSettings.activityVisible);
@@ -181,6 +196,31 @@ export function SettingsPageClient({
 
   return (
     <div className="relative overflow-hidden text-on-background antialiased">
+      {saveNotice ? (
+        <div
+          aria-live="polite"
+          className="fixed right-4 top-4 z-[100] flex w-[min(22rem,calc(100vw-2rem))] items-center gap-3 rounded-xl border border-primary/30 bg-surface-container-lowest px-4 py-3 text-on-surface shadow-2xl shadow-primary/10 sm:right-6 sm:top-6"
+          role="status"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
+            <SuccessIcon />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold">Changes saved</p>
+            <p className="mt-0.5 text-xs text-on-surface-variant">
+              {saveNotice}
+            </p>
+          </div>
+          <button
+            aria-label="Dismiss notification"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface"
+            onClick={() => setSaveNotice("")}
+            type="button"
+          >
+            <DismissIcon />
+          </button>
+        </div>
+      ) : null}
       <div className="relative z-10 flex w-full justify-center">
         <div className="w-full max-w-2xl space-y-6">
         <div>
@@ -248,7 +288,10 @@ export function SettingsPageClient({
             </div>
             <Field label="Account Name">
               <input
+                autoComplete="name"
                 className={inputClassName}
+                id="settings-name"
+                name="name"
                 onChange={(event) => setAccountName(event.target.value)}
                 placeholder="Enter display name"
                 type="text"
@@ -257,22 +300,78 @@ export function SettingsPageClient({
             </Field>
             <Field label="Email Address">
               <input
+                autoCapitalize="none"
+                autoComplete="username"
                 className={inputClassName}
+                id="settings-email"
+                name="username"
                 onChange={(event) => setAccountEmail(event.target.value)}
                 placeholder="Enter email address"
+                spellCheck={false}
                 type="email"
                 value={accountEmail}
               />
             </Field>
             <Field label="Change Password">
-              <input
-                className={inputClassName}
-                onChange={(event) => setNewPassword(event.target.value)}
-                placeholder="Enter new password"
-                type="password"
-                value={newPassword}
-              />
+              {isChangingPassword ? (
+                <div className="space-y-3">
+                  <input
+                    autoComplete="current-password"
+                    className={inputClassName}
+                    id="settings-current-password"
+                    name="current-password"
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    placeholder="Enter current password"
+                    type="password"
+                    value={currentPassword}
+                  />
+                  <input
+                    autoComplete="new-password"
+                    className={inputClassName}
+                    id="settings-new-password"
+                    name="new-password"
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    placeholder="Enter new password"
+                    type="password"
+                    value={newPassword}
+                  />
+                  <button
+                    className="text-sm font-semibold text-on-surface-variant transition-colors hover:text-on-surface"
+                    onClick={() => {
+                      setCurrentPassword("");
+                      setIsChangingPassword(false);
+                      setNewPassword("");
+                    }}
+                    type="button"
+                  >
+                    Cancel password change
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className={`${inputClassName} text-left text-on-surface-variant transition-colors hover:border-primary hover:text-on-surface`}
+                  onClick={() => setIsChangingPassword(true)}
+                  type="button"
+                >
+                  Set a new password
+                </button>
+              )}
             </Field>
+            {accountEmail.trim().toLowerCase() !== savedSettings.email &&
+            !isChangingPassword ? (
+              <Field label="Current Password">
+                <input
+                  autoComplete="current-password"
+                  className={inputClassName}
+                  id="settings-email-current-password"
+                  name="current-password"
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  placeholder="Confirm email change"
+                  type="password"
+                  value={currentPassword}
+                />
+              </Field>
+            ) : null}
           </div>
         </section>
 
@@ -442,5 +541,33 @@ function ToggleRow({
         <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-surface-container-lowest shadow-sm transition-transform duration-300 peer-checked:translate-x-6" />
       </label>
     </div>
+  );
+}
+
+function SuccessIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+      <path
+        d="m7 12 3 3 7-7"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function DismissIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+      <path
+        d="m7 7 10 10M17 7 7 17"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="2"
+      />
+    </svg>
   );
 }

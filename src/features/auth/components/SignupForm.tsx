@@ -100,13 +100,14 @@ export function SignupForm() {
   return (
     <form className="space-y-4" method="POST" onSubmit={handleSubmit}>
       <div>
-        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300" htmlFor="signup-name">
           Full Name
         </label>
         <input
           autoComplete="name"
           className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
-          name="full_name"
+          id="signup-name"
+          name="name"
           onChange={(event) => updateField("name", event.target.value)}
           placeholder="John Doe"
           required
@@ -121,16 +122,19 @@ export function SignupForm() {
       </div>
 
       <div>
-        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300" htmlFor="signup-email">
           Email Address
         </label>
         <input
-          autoComplete="email"
+          autoCapitalize="none"
+          autoComplete="username"
           className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
-          name="email"
+          id="signup-email"
+          name="username"
           onChange={(event) => updateField("email", event.target.value)}
           placeholder="name@university.edu"
           required
+          spellCheck={false}
           type="email"
           value={fields.email}
         />
@@ -142,13 +146,14 @@ export function SignupForm() {
       </div>
 
       <div>
-        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300" htmlFor="signup-password">
           Password
         </label>
         <div className="relative flex items-center">
           <input
             autoComplete="new-password"
             className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-20 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+            id="signup-password"
             name="password"
             onChange={(event) => updateField("password", event.target.value)}
             placeholder="Create a password"
@@ -180,13 +185,14 @@ export function SignupForm() {
       </div>
 
       <div>
-        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <label className="block mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300" htmlFor="signup-confirm-password">
           Confirm Password
         </label>
         <div className="relative flex items-center">
           <input
             autoComplete="new-password"
             className="form-input h-12 w-full rounded-xl border border-slate-200 bg-white p-3 pr-20 text-base font-normal text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+            id="signup-confirm-password"
             name="confirm_password"
             onChange={(event) =>
               updateField("confirmPassword", event.target.value)

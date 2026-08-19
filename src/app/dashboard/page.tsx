@@ -83,7 +83,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-background pb-8 text-on-background">
-      <DesktopSidebar />
+      <DesktopSidebar userRole={user.role} />
       <section className="md:ml-64">
         <DashboardHeader progress={progress} user={user} />
         <div className="mx-auto mt-4 max-w-7xl space-y-8 px-6">
@@ -105,7 +105,11 @@ export default async function DashboardPage() {
   );
 }
 
-function DesktopSidebar() {
+function DesktopSidebar({ userRole }: { userRole: AuthUser["role"] }) {
+  const visibleNavItems = navItems.filter(
+    (item) => item.href !== "/admin" || userRole === "admin",
+  );
+
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col border-r border-outline-variant bg-surface-container-lowest md:flex">
       <div className="flex flex-col gap-1 p-6">
@@ -117,7 +121,7 @@ function DesktopSidebar() {
         </p>
       </div>
       <nav className="custom-scrollbar mt-4 flex-1 space-y-1 overflow-y-auto px-3">
-        {navItems.map((item) => (
+        {visibleNavItems.map((item) => (
           <Link
             aria-current={item.active ? "page" : undefined}
             className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200 active:scale-95 ${

@@ -23,7 +23,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     os.makedirs(app.instance_path, exist_ok=True)
     app.config.from_object(Config)
-    app.config["SQLALCHEMY_DATABASE_URI"] = Config.database_uri(app.instance_path)
+    app.config["SQLALCHEMY_DATABASE_URI"] = Config.database_uri()
     if test_config:
         app.config.update(test_config)
 

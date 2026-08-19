@@ -60,6 +60,23 @@ def test_leaderboard_requires_authentication(client):
     assert response.status_code == 401
 
 
+def test_admin_like_email_does_not_grant_admin_access(client):
+    registration = client.post(
+        "/api/auth/register",
+        json={
+            "email": "admin-student@onsite.example",
+            "name": "Student Administrator",
+            "password": "SecurePass123!",
+        },
+    )
+    registered_user = registration.get_json()["user"]
+    admin_response = client.get("/api/admin/overview")
+
+    assert registration.status_code == 201
+    assert registered_user["role"] == "student"
+    assert admin_response.status_code == 403
+
+
 def test_leaderboard_ranks_visible_students_by_real_progress(
     app, authenticated_client
 ):
@@ -397,6 +414,44 @@ def test_register_rejects_weak_password(client):
 
     assert response.status_code == 400
     assert "Password" in response.get_json()["error"]
+
+
+def test_each_email_keeps_its_own_password(client):
+    accounts = (
+        ("first@example.edu", "FirstPass123!"),
+        ("second@example.edu", "SecondPass456!"),
+    )
+    for index, (email, password) in enumerate(accounts, start=1):
+        response = client.post(
+            "/api/auth/register",
+            json={
+                "email": email,
+                "name": f"Explorer {index}",
+                "password": password,
+            },
+        )
+        assert response.status_code == 201
+        client.post("/api/auth/logout")
+
+    wrong_password = client.post(
+        "/api/auth/login",
+        json={"email": accounts[0][0], "password": accounts[1][1]},
+    )
+    first_login = client.post(
+        "/api/auth/login",
+        json={"email": "FIRST@EXAMPLE.EDU", "password": accounts[0][1]},
+    )
+    client.post("/api/auth/logout")
+    second_login = client.post(
+        "/api/auth/login",
+        json={"email": accounts[1][0], "password": accounts[1][1]},
+    )
+
+    assert wrong_password.status_code == 401
+    assert first_login.status_code == 200
+    assert first_login.get_json()["user"]["email"] == accounts[0][0]
+    assert second_login.status_code == 200
+    assert second_login.get_json()["user"]["email"] == accounts[1][0]
 
 
 def test_password_reset_updates_credentials_and_token_is_single_use(client):

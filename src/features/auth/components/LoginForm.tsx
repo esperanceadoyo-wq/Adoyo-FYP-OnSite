@@ -60,19 +60,22 @@ export function LoginForm() {
   return (
     <form className="space-y-5 px-8 py-6" method="POST" onSubmit={handleSubmit}>
       <div className="flex w-full flex-col">
-        <label className="ml-1 pb-2 text-sm font-semibold leading-normal text-slate-700 dark:text-slate-300">
+        <label className="ml-1 pb-2 text-sm font-semibold leading-normal text-slate-700 dark:text-slate-300" htmlFor="login-email">
           Email Address
         </label>
         <input
-          autoComplete="email"
+          autoCapitalize="none"
+          autoComplete="username"
           className="form-input flex h-14 w-full rounded-xl border border-slate-200 bg-white p-[15px] text-base font-normal text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-500"
-          name="email"
+          id="login-email"
+          name="username"
           onChange={(event) => {
             setEmail(event.target.value);
             setError("");
           }}
           placeholder="name@company.com"
           required
+          spellCheck={false}
           type="email"
           value={email}
         />
@@ -80,7 +83,7 @@ export function LoginForm() {
 
       <div className="flex w-full flex-col">
         <div className="flex items-center justify-between pb-2">
-          <label className="ml-1 text-sm font-semibold leading-normal text-slate-700 dark:text-slate-300">
+          <label className="ml-1 text-sm font-semibold leading-normal text-slate-700 dark:text-slate-300" htmlFor="login-password">
             Password
           </label>
           <a
@@ -94,6 +97,7 @@ export function LoginForm() {
           <input
             autoComplete="current-password"
             className="form-input flex h-14 w-full rounded-xl border border-slate-200 bg-white p-[15px] pr-20 text-base font-normal text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-500"
+            id="login-password"
             name="password"
             onChange={(event) => {
               setPassword(event.target.value);

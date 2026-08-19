@@ -37,10 +37,10 @@ class Config:
     )
 
     @staticmethod
-    def database_uri(instance_path: str) -> str:
+    def database_uri() -> str:
         configured_uri = os.getenv("DATABASE_URL")
         if configured_uri:
             return configured_uri
 
-        database_path = Path(instance_path) / "onsite.db"
+        database_path = BACKEND_ROOT / "instance" / "onsite.db"
         return f"sqlite:///{database_path.as_posix()}"
