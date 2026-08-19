@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { AuthRecoveryShell } from "@/components/AuthRecoveryShell";
-import { ForgotPasswordForm } from "@/components/ForgotPasswordForm";
+import { AuthRecoveryShell } from "@/features/auth/components/AuthRecoveryShell";
+import { ForgotPasswordForm } from "@/features/auth/components/ForgotPasswordForm";
 
 export const metadata: Metadata = { title: "Forgot Password" };
 

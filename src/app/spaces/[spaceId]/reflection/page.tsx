@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ReflectionForm } from "@/components/ReflectionForm";
-import { getCurrentProfile } from "@/lib/profile";
-import { catalogSpacePath } from "@/lib/space-flow";
-import { requireAuth } from "@/lib/server-auth";
-import { requireSpace } from "@/lib/server-spaces";
-import { getSpaceDetails } from "@/lib/spaces";
-import { getVisit } from "@/lib/visits";
+import { ReflectionForm } from "@/features/spaces/components/ReflectionForm";
+import { getCurrentProfile } from "@/features/profile/profile";
+import { catalogSpacePath } from "@/features/spaces/space-flow";
+import { requireAuth } from "@/features/auth/server-auth";
+import { requireSpace } from "@/features/spaces/server-spaces";
+import { getSpaceDetails } from "@/features/spaces/spaces";
+import { getVisit } from "@/features/spaces/visits";
 
 type SpaceRouteProps = {
   params: Promise<{ spaceId: string }>;

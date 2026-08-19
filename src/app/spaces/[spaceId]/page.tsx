@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { SaveSpaceButton } from "@/components/SaveSpaceButton";
-import { requireAuth } from "@/lib/server-auth";
-import { requireSpace } from "@/lib/server-spaces";
-import { getSavedSpaces } from "@/lib/saved-spaces";
-import { catalogSpacePath } from "@/lib/space-flow";
-import { getSpaceDetails, type Space } from "@/lib/spaces";
+import { SaveSpaceButton } from "@/features/spaces/components/SaveSpaceButton";
+import { requireAuth } from "@/features/auth/server-auth";
+import { requireSpace } from "@/features/spaces/server-spaces";
+import { getSavedSpaces } from "@/features/saved/saved-spaces";
+import { catalogSpacePath } from "@/features/spaces/space-flow";
+import { getSpaceDetails, type Space } from "@/features/spaces/spaces";
 
 type SpaceRouteProps = { params: Promise<{ spaceId: string }> };
 

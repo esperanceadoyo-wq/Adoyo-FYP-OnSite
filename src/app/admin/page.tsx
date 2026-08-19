@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AppChrome } from "@/components/AppChrome";
-import { getAdminOverview } from "@/lib/admin";
-import { getDashboardData } from "@/lib/dashboard-data";
-import { requireAdmin } from "@/lib/server-auth";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { getAdminOverview } from "@/features/admin/admin";
+import { getDashboardData } from "@/features/dashboard/dashboard-data";
+import { requireAdmin } from "@/features/auth/server-auth";
 import { AdminLocationsTable } from "./admin-locations-table";
 
 export const metadata: Metadata = {

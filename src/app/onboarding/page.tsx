@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { PageShell } from "@/components/PageShell";
-import { requireAuth } from "@/lib/server-auth";
+import { PageShell } from "@/shared/components/PageShell";
+import { requireAuth } from "@/features/auth/server-auth";
 
 export const metadata: Metadata = {
   title: "Onboarding",

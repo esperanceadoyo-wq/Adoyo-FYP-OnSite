@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { AppChrome } from "@/components/AppChrome";
-import { getDashboardData } from "@/lib/dashboard-data";
-import { requireAuth } from "@/lib/server-auth";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { getDashboardData } from "@/features/dashboard/dashboard-data";
+import { requireAuth } from "@/features/auth/server-auth";
 import { SettingsPageClient } from "./settings-page-client";
 
 export const metadata: Metadata = {

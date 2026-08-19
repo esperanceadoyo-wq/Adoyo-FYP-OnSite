@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { AppChrome } from "@/components/AppChrome";
-import { BrandLogo } from "@/components/BrandLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { BrandLogo } from "@/shared/components/BrandLogo";
+import { UserAvatar } from "@/features/profile/components/UserAvatar";
 import {
   getDashboardData,
   type AchievementProgress,
-} from "@/lib/dashboard-data";
-import { requireAuth } from "@/lib/server-auth";
+} from "@/features/dashboard/dashboard-data";
+import { requireAuth } from "@/features/auth/server-auth";
 
 export const metadata: Metadata = {
   title: "Profile & My Journey",

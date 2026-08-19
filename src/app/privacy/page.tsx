@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageShell } from "@/components/PageShell";
+import { PageShell } from "@/shared/components/PageShell";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",

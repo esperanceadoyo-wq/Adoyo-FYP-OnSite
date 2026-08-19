@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { AdminLocation } from "@/lib/admin";
+import type { AdminLocation } from "@/features/admin/admin";
 
 export function AdminLocationsTable({ locations }: { locations: AdminLocation[] }) {
   const router = useRouter();

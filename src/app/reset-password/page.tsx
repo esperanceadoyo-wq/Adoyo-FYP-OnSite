@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AuthRecoveryShell } from "@/components/AuthRecoveryShell";
-import { ResetPasswordForm } from "@/components/ResetPasswordForm";
+import { AuthRecoveryShell } from "@/features/auth/components/AuthRecoveryShell";
+import { ResetPasswordForm } from "@/features/auth/components/ResetPasswordForm";
 
 export const metadata: Metadata = { title: "Reset Password" };
 

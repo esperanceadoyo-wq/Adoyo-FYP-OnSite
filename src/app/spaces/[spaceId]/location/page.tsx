@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckInButton } from "@/components/CheckInButton";
-import { catalogSpacePath } from "@/lib/space-flow";
-import { requireAuth } from "@/lib/server-auth";
-import { requireSpace } from "@/lib/server-spaces";
-import { getSpaceDetails } from "@/lib/spaces";
+import { CheckInButton } from "@/features/spaces/components/CheckInButton";
+import { catalogSpacePath } from "@/features/spaces/space-flow";
+import { requireAuth } from "@/features/auth/server-auth";
+import { requireSpace } from "@/features/spaces/server-spaces";
+import { getSpaceDetails } from "@/features/spaces/spaces";
 
 type SpaceRouteProps = { params: Promise<{ spaceId: string }> };
 

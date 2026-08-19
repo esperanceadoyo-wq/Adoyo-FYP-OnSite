@@ -30,6 +30,15 @@ Open [http://localhost:3000](http://localhost:3000). The Flask API runs at
 Backend details and endpoint documentation live in
 [`backend/README.md`](backend/README.md).
 
+## Project Structure
+
+The frontend is organized by feature while Next.js route entry points remain in
+`src/app`. Shared presentation and infrastructure live in `src/shared`, and the
+Flask backend is separated into API, service, model, migration, and test layers.
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the complete repository
+map, dependency rules, request flows, and a suggested presentation order.
+
 ## Verification
 
 ```sh

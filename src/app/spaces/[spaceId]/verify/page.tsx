@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { catalogSpacePath } from "@/lib/space-flow";
-import { requireAuth } from "@/lib/server-auth";
-import { requireSpace } from "@/lib/server-spaces";
-import { getSpaceDetails } from "@/lib/spaces";
-import { getVisit } from "@/lib/visits";
+import { catalogSpacePath } from "@/features/spaces/space-flow";
+import { requireAuth } from "@/features/auth/server-auth";
+import { requireSpace } from "@/features/spaces/server-spaces";
+import { getSpaceDetails } from "@/features/spaces/spaces";
+import { getVisit } from "@/features/spaces/visits";
 
 type SpaceRouteProps = {
   params: Promise<{ spaceId: string }>;

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { startRouteMotion } from "@/components/RouteMotion";
+import { startRouteMotion } from "@/shared/components/RouteMotion";
 
 const chipGroups = [
   {

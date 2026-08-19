@@ -1,4 +1,4 @@
-import { proxyBackendRequest } from "@/lib/backend";
+import { proxyBackendRequest } from "@/shared/lib/backend";
 
 export const runtime = "nodejs";
 

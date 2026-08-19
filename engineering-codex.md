@@ -37,6 +37,8 @@ Before changing framework conventions, read the relevant local Next.js 16 docume
 4. **Static Migration Content:** `src/content/pages.ts` and `StaticHtmlPage` are migration scaffolding for legacy pages. New or actively edited product surfaces should be converted into real React components instead of expanding raw HTML strings.
 5. **Server Endpoints:** The project backend is the Flask JSON API under `backend/`. Next.js App Router route handlers may be used as thin frontend proxies when useful, but domain logic and persistence belong in Flask. Do not reintroduce an Express static server.
 6. **Config Files Stay Root-Level:** Keep `package.json`, `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, and `.env*` files at the repository root.
+7. **Feature Modules:** Frontend business capabilities belong under `src/features/<feature>`. Keep route-only presentation colocated with its `src/app` route and place code shared across features under `src/shared`.
+8. **Dependency Direction:** Routes may compose feature and shared modules. Feature modules may depend on shared modules. Shared modules must not import from a feature module.
 
 ---
 

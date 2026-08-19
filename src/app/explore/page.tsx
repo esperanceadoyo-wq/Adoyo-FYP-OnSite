@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { AppChrome } from "@/components/AppChrome";
-import { getDashboardData } from "@/lib/dashboard-data";
-import { requireAuth } from "@/lib/server-auth";
-import { catalogSpacePath } from "@/lib/space-flow";
-import { getSpaceCatalog, type Space } from "@/lib/spaces";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { getDashboardData } from "@/features/dashboard/dashboard-data";
+import { requireAuth } from "@/features/auth/server-auth";
+import { catalogSpacePath } from "@/features/spaces/space-flow";
+import { getSpaceCatalog, type Space } from "@/features/spaces/spaces";
 
 export const metadata: Metadata = {
   title: "Explore Spaces",

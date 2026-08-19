@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { AppChrome } from "@/components/AppChrome";
-import { getDashboardData } from "@/lib/dashboard-data";
-import { requireAdmin } from "@/lib/server-auth";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { getDashboardData } from "@/features/dashboard/dashboard-data";
+import { requireAdmin } from "@/features/auth/server-auth";
 import { AddLocationForm } from "./add-location-form";
 
 export const metadata: Metadata = {

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { ViewTransition } from "react";
-import { AuthWelcomeToast } from "@/components/AuthWelcomeToast";
-import { BackToTopButton } from "@/components/BackToTopButton";
-import { ChatWidget } from "@/components/ChatWidget";
-import { RouteMotion } from "@/components/RouteMotion";
+import { AuthWelcomeToast } from "@/features/auth/components/AuthWelcomeToast";
+import { ChatWidget } from "@/features/chat/components/ChatWidget";
+import { BackToTopButton } from "@/shared/components/BackToTopButton";
+import { RouteMotion } from "@/shared/components/RouteMotion";
 import "./globals.css";
 
 export const metadata: Metadata = {

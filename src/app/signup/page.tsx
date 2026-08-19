@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { BrandLogo } from "@/components/BrandLogo";
-import { PageShell } from "@/components/PageShell";
-import { SignupForm } from "@/components/SignupForm";
+import { BrandLogo } from "@/shared/components/BrandLogo";
+import { PageShell } from "@/shared/components/PageShell";
+import { SignupForm } from "@/features/auth/components/SignupForm";
 
 export const metadata: Metadata = {
   title: "Sign Up",

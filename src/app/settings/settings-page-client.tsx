@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { UserAvatar } from "@/components/UserAvatar";
-import type { AuthUser } from "@/lib/auth";
-import { validateEmail, validateName, validatePassword } from "@/lib/auth";
-import type { UserProfile } from "@/lib/dashboard-data";
-import { applyTheme, useTheme } from "@/lib/theme";
+import { UserAvatar } from "@/features/profile/components/UserAvatar";
+import type { AuthUser } from "@/features/auth/auth";
+import { validateEmail, validateName, validatePassword } from "@/features/auth/auth";
+import type { UserProfile } from "@/features/dashboard/dashboard-data";
+import { applyTheme, useTheme } from "@/shared/lib/theme";
 
 export function SettingsPageClient({
   activityVisible,

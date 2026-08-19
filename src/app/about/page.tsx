@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { BrandLogo } from "@/components/BrandLogo";
-import { PageShell } from "@/components/PageShell";
+import { BrandLogo } from "@/shared/components/BrandLogo";
+import { PageShell } from "@/shared/components/PageShell";
 
 export const metadata: Metadata = {
   title: "About OnSite - Our Story",

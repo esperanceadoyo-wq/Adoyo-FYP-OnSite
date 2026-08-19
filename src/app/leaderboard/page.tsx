@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { AppChrome } from "@/components/AppChrome";
-import { getInitials } from "@/lib/auth";
-import { getDashboardData } from "@/lib/dashboard-data";
-import { getLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
-import { requireAuth } from "@/lib/server-auth";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { getInitials } from "@/features/auth/auth";
+import { getDashboardData } from "@/features/dashboard/dashboard-data";
+import { getLeaderboard, type LeaderboardEntry } from "@/features/leaderboard/leaderboard";
+import { requireAuth } from "@/features/auth/server-auth";
 
 export const metadata: Metadata = {
   title: "Global Leaderboard",

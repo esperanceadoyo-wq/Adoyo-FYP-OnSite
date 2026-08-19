@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { SavedSpace } from "@/lib/saved-spaces";
-import { catalogSpacePath } from "@/lib/space-flow";
+import type { SavedSpace } from "@/features/saved/saved-spaces";
+import { catalogSpacePath } from "@/features/spaces/space-flow";
 
 export function SavedPageClient({
   initialError,

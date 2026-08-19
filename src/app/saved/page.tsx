@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AppChrome } from "@/components/AppChrome";
-import { getDashboardData } from "@/lib/dashboard-data";
-import { getSavedSpaces } from "@/lib/saved-spaces";
-import { requireAuth } from "@/lib/server-auth";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { getDashboardData } from "@/features/dashboard/dashboard-data";
+import { getSavedSpaces } from "@/features/saved/saved-spaces";
+import { requireAuth } from "@/features/auth/server-auth";
 import { SavedPageClient } from "./saved-page-client";
 
 export const metadata: Metadata = {

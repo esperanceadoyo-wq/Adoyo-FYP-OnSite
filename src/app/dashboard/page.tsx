@@ -6,20 +6,20 @@ import {
   DashboardAuthPanel,
   DashboardGreeting,
   LogoutButton,
-} from "@/components/DashboardAuth";
-import { NearbyRecommendations } from "@/components/NearbyRecommendations";
-import { BrandLogo } from "@/components/BrandLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+} from "@/features/auth/components/DashboardAuth";
+import { NearbyRecommendations } from "@/features/dashboard/components/NearbyRecommendations";
+import { BrandLogo } from "@/shared/components/BrandLogo";
+import { UserAvatar } from "@/features/profile/components/UserAvatar";
 import {
   getDashboardData,
   type UserProfile,
   type UserProgress,
-} from "@/lib/dashboard-data";
-import { requireAuth } from "@/lib/server-auth";
-import type { AuthUser } from "@/lib/auth";
-import type { SpaceRecommendation } from "@/lib/recommendations";
-import { catalogSpacePath } from "@/lib/space-flow";
-import type { Space } from "@/lib/spaces";
+} from "@/features/dashboard/dashboard-data";
+import { requireAuth } from "@/features/auth/server-auth";
+import type { AuthUser } from "@/features/auth/auth";
+import type { SpaceRecommendation } from "@/features/recommendations/recommendations";
+import { catalogSpacePath } from "@/features/spaces/space-flow";
+import type { Space } from "@/features/spaces/spaces";
 
 export const metadata: Metadata = {
   title: "Dashboard",

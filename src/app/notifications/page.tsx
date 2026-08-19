@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { AppChrome } from "@/components/AppChrome";
-import { getDashboardData } from "@/lib/dashboard-data";
-import { requireAuth } from "@/lib/server-auth";
+import { AppChrome } from "@/features/navigation/components/AppChrome";
+import { getDashboardData } from "@/features/dashboard/dashboard-data";
+import { requireAuth } from "@/features/auth/server-auth";
 
 export const metadata: Metadata = {
   title: "Notifications & Community",

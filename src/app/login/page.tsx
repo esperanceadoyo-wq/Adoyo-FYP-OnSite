@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { BrandLogo } from "@/components/BrandLogo";
-import { LoginForm } from "@/components/LoginForm";
-import { PageShell } from "@/components/PageShell";
+import { BrandLogo } from "@/shared/components/BrandLogo";
+import { LoginForm } from "@/features/auth/components/LoginForm";
+import { PageShell } from "@/shared/components/PageShell";
 
 export const metadata: Metadata = {
   title: "Log In",
