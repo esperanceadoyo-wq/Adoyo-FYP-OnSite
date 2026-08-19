@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   type FormEvent,
   type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   useEffect,
   useRef,
   useState,
@@ -31,6 +32,24 @@ type Message = {
   text: string;
 };
 
+type LauncherPosition = {
+  x: number;
+  y: number;
+};
+
+type DragState = {
+  hasMoved: boolean;
+  offsetX: number;
+  offsetY: number;
+  pointerId: number;
+  startX: number;
+  startY: number;
+};
+
+const LAUNCHER_SIZE = 56;
+const VIEWPORT_MARGIN = 8;
+const DRAG_THRESHOLD = 5;
+
 const welcomeMessage: Message = {
   id: 1,
   role: "assistant",
@@ -48,11 +67,16 @@ export function ChatWidget() {
   const [isSending, setIsSending] = useState(false);
   const [input, setInput] = useState("");
   const [lastIntent, setLastIntent] = useState<string | null>(null);
+  const [launcherPosition, setLauncherPosition] =
+    useState<LauncherPosition | null>(null);
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
+  const dragStateRef = useRef<DragState | null>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(2);
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const suppressLauncherClickRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -78,9 +102,38 @@ export function ChatWidget() {
     }
   }, [isOpen, messages]);
 
+  useEffect(() => {
+    function keepLauncherInViewport() {
+      setLauncherPosition((current) =>
+        current ? clampLauncherPosition(current.x, current.y) : null,
+      );
+    }
+
+    window.addEventListener("resize", keepLauncherInViewport);
+    return () => window.removeEventListener("resize", keepLauncherInViewport);
+  }, []);
+
+  useEffect(
+    () => () => {
+      requestControllerRef.current?.abort();
+    },
+    [],
+  );
+
   function closeChat() {
     setIsOpen(false);
     window.requestAnimationFrame(() => launcherRef.current?.focus());
+  }
+
+  function resetChat() {
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
+    nextId.current = 2;
+    setInput("");
+    setIsSending(false);
+    setLastIntent(null);
+    setMessages([welcomeMessage]);
+    window.requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   async function sendMessage(text: string) {
@@ -94,6 +147,9 @@ export function ChatWidget() {
       { id: nextId.current++, role: "user", text: message },
     ]);
 
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+
     try {
       const response = await fetch("/api/chat", {
         body: JSON.stringify({
@@ -103,6 +159,7 @@ export function ChatWidget() {
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
+        signal: controller.signal,
       });
       const data = (await response.json()) as ChatResponse & { error?: string };
       if (!response.ok) {
@@ -120,7 +177,9 @@ export function ChatWidget() {
           text: data.answer,
         },
       ]);
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+
       setMessages((current) => [
         ...current,
         {
@@ -131,9 +190,80 @@ export function ChatWidget() {
         },
       ]);
     } finally {
-      setIsSending(false);
-      window.requestAnimationFrame(() => inputRef.current?.focus());
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+        setIsSending(false);
+        window.requestAnimationFrame(() => inputRef.current?.focus());
+      }
     }
+  }
+
+  function startLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.button !== 0) return;
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    dragStateRef.current = {
+      hasMoved: false,
+      offsetX: event.clientX - bounds.left,
+      offsetY: event.clientY - bounds.top,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveLauncher(event: ReactPointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+
+    if (
+      Math.hypot(
+        event.clientX - dragState.startX,
+        event.clientY - dragState.startY,
+      ) >= DRAG_THRESHOLD
+    ) {
+      dragState.hasMoved = true;
+    }
+
+    if (!dragState.hasMoved) return;
+    event.preventDefault();
+    setLauncherPosition(
+      clampLauncherPosition(
+        event.clientX - dragState.offsetX,
+        event.clientY - dragState.offsetY,
+      ),
+    );
+  }
+
+  function finishLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+
+    suppressLauncherClickRef.current = dragState.hasMoved;
+    dragStateRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function cancelLauncherDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+
+    dragStateRef.current = null;
+    suppressLauncherClickRef.current = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function openChatFromLauncher() {
+    if (suppressLauncherClickRef.current) {
+      suppressLauncherClickRef.current = false;
+      return;
+    }
+    setIsOpen(true);
   }
 
   function submitForm(event: FormEvent<HTMLFormElement>) {
@@ -166,6 +296,15 @@ export function ChatWidget() {
               <h2 className="truncate text-sm font-extrabold">OnSite Guide</h2>
               <p className="text-[11px] font-medium opacity-75">Application help</p>
             </div>
+            <button
+              aria-label="Start a new chat"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-on-primary-container transition-colors hover:bg-on-primary-container/10 focus-visible:bg-on-primary-container/10"
+              onClick={resetChat}
+              title="Start a new chat"
+              type="button"
+            >
+              <RefreshIcon />
+            </button>
             <button
               aria-label="Close OnSite Guide"
               className="flex h-11 w-11 items-center justify-center rounded-full text-on-primary-container transition-colors hover:bg-on-primary-container/10 focus-visible:bg-on-primary-container/10"
@@ -231,9 +370,23 @@ export function ChatWidget() {
       ) : (
         <button
           aria-label="Open OnSite Guide"
-          className="app-theme fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-5 z-[80] flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-primary text-on-primary shadow-[0_10px_30px_rgba(42,184,203,0.35)] transition-[transform,filter] hover:-translate-y-1 hover:brightness-105 focus-visible:-translate-y-1 md:bottom-6 md:right-6"
-          onClick={() => setIsOpen(true)}
+          className="app-theme fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-5 z-[80] flex h-14 w-14 touch-none cursor-grab items-center justify-center rounded-full border border-primary/30 bg-primary text-on-primary shadow-[0_10px_30px_rgba(42,184,203,0.35)] transition-[filter] hover:brightness-105 active:cursor-grabbing md:bottom-6 md:right-6"
+          onClick={openChatFromLauncher}
+          onPointerCancel={cancelLauncherDrag}
+          onPointerDown={startLauncherDrag}
+          onPointerMove={moveLauncher}
+          onPointerUp={finishLauncherDrag}
           ref={launcherRef}
+          style={
+            launcherPosition
+              ? {
+                  bottom: "auto",
+                  left: launcherPosition.x,
+                  right: "auto",
+                  top: launcherPosition.y,
+                }
+              : undefined
+          }
           title="Open OnSite Guide"
           type="button"
         >
@@ -360,6 +513,20 @@ function CloseIcon() {
   );
 }
 
+function RefreshIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M19 8a7 7 0 1 0 .3 7M19 4v4h-4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 function SendIcon() {
   return (
     <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
@@ -372,4 +539,17 @@ function SendIcon() {
       <path d="M7 12h13" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
+}
+
+function clampLauncherPosition(x: number, y: number): LauncherPosition {
+  return {
+    x: Math.min(
+      Math.max(VIEWPORT_MARGIN, x),
+      Math.max(VIEWPORT_MARGIN, window.innerWidth - LAUNCHER_SIZE - VIEWPORT_MARGIN),
+    ),
+    y: Math.min(
+      Math.max(VIEWPORT_MARGIN, y),
+      Math.max(VIEWPORT_MARGIN, window.innerHeight - LAUNCHER_SIZE - VIEWPORT_MARGIN),
+    ),
+  };
 }
