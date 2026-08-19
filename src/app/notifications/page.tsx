@@ -3,6 +3,7 @@ import Image from "next/image";
 import { AppChrome } from "@/features/navigation/components/AppChrome";
 import { getDashboardData } from "@/features/dashboard/dashboard-data";
 import { requireAuth } from "@/features/auth/server-auth";
+import { LEVEL_TIERS, XP_PER_LEVEL } from "@/features/progress/levels";
 
 export const metadata: Metadata = {
   title: "Notifications & Community",
@@ -365,9 +366,15 @@ function MilestonesCard() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            <MilestoneRow badge="New Explorer" complete tier="Tier 1" xp="0-200" />
-            <MilestoneRow badge="Campus Wanderer" complete tier="Tier 2" xp="201-500" />
-            <MilestoneRow badge="Community Connector" tier="Tier 3" xp="501-1000" />
+            {LEVEL_TIERS.slice(0, 3).map((levelTier, index) => (
+              <MilestoneRow
+                badge={levelTier.title}
+                complete={index < 2}
+                key={levelTier.level}
+                tier={`Tier ${levelTier.level}`}
+                xp={`${levelTier.minimumXp}-${levelTier.minimumXp + XP_PER_LEVEL - 1}`}
+              />
+            ))}
           </tbody>
         </table>
       </div>

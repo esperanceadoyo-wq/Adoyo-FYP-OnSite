@@ -39,6 +39,7 @@ Browser
 | `features/recommendations` | Recommendation response types. |
 | `features/saved` | Saved-space data access and types. |
 | `features/profile` | Profile data and avatar presentation. |
+| `features/progress` | Canonical frontend level names and XP tier thresholds. |
 | `features/leaderboard` | Leaderboard data access and ranking types. |
 | `features/admin` | Admin overview data access and management types. |
 | `features/navigation` | Authenticated application sidebar and header shell. |

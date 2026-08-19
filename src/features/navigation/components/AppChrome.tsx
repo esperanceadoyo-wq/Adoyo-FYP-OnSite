@@ -5,6 +5,7 @@ import { LogoutButton } from "@/features/auth/components/DashboardAuth";
 import { UserAvatar } from "@/features/profile/components/UserAvatar";
 import type { AuthUser } from "@/features/auth/auth";
 import type { UserProgress } from "@/features/dashboard/dashboard-data";
+import { levelName } from "@/features/progress/levels";
 
 export type AppIconName =
   | "admin"
@@ -226,7 +227,7 @@ function dashboardStatChips(progress: UserProgress | null) {
     {
       icon: "fire",
       label: `${reflections} Reflections`,
-      value: reflections === 0 ? "First reflection pending" : "Keep learning",
+      value: reflections === 0 ? "First reflection pending" : "Keep going!",
       className: "bg-tertiary-container/30 border border-tertiary/20",
       iconClassName: "text-tertiary",
       valueClassName: "text-tertiary",
@@ -247,13 +248,6 @@ function dashboardStatChips(progress: UserProgress | null) {
     iconClassName: string;
     valueClassName: string;
   }>;
-}
-
-function levelName(level: number) {
-  if (level >= 5) return "Community Guide";
-  if (level >= 3) return "Space Regular";
-  if (level >= 2) return "Focus Finder";
-  return "New Explorer";
 }
 
 export function AppIcon({

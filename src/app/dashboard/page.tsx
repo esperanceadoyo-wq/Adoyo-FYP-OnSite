@@ -18,6 +18,7 @@ import {
 import { requireAuth } from "@/features/auth/server-auth";
 import type { AuthUser } from "@/features/auth/auth";
 import type { SpaceRecommendation } from "@/features/recommendations/recommendations";
+import { levelName } from "@/features/progress/levels";
 import { catalogSpacePath } from "@/features/spaces/space-flow";
 import type { Space } from "@/features/spaces/spaces";
 
@@ -319,7 +320,7 @@ function dashboardStatChips(progress: UserProgress | null): StatChip[] {
     {
       icon: "fire",
       label: `${reflections} Reflections`,
-      value: reflections === 0 ? "First reflection pending" : "Keep learning",
+      value: reflections === 0 ? "First reflection pending" : "Keep going!",
       className: "bg-tertiary-container/30 border border-tertiary/20",
       iconClassName: "text-tertiary",
       valueClassName: "text-tertiary",
@@ -351,13 +352,6 @@ function profileSummary(profile: UserProfile | null) {
     : "study";
 
   return `Welcome back. Your dashboard is tuned for ${mood}, ${comfort.toLowerCase()} spaces, and ${interests.toLowerCase()} goals.`;
-}
-
-function levelName(level: number) {
-  if (level >= 5) return "Community Guide";
-  if (level >= 3) return "Space Regular";
-  if (level >= 2) return "Focus Finder";
-  return "New Explorer";
 }
 
 function formatLabel(value: string) {

@@ -6,6 +6,7 @@ import { startRouteMotion } from "@/shared/components/RouteMotion";
 import { UserAvatar } from "@/features/profile/components/UserAvatar";
 import type { AuthUser } from "@/features/auth/auth";
 import type { UserProgress } from "@/features/dashboard/dashboard-data";
+import { levelName } from "@/features/progress/levels";
 
 export function DashboardAuthPanel({
   progress,
@@ -21,7 +22,6 @@ export function DashboardAuthPanel({
     />
   );
 }
-
 export function DashboardGreeting({ user }: { user: AuthUser }) {
   const firstName = user.name.split(/\s+/)[0] || "there";
 
@@ -101,11 +101,4 @@ function UserPanelShell({
       </div>
     </div>
   );
-}
-
-function levelName(level: number) {
-  if (level >= 5) return "Community Guide";
-  if (level >= 3) return "Space Regular";
-  if (level >= 2) return "Focus Finder";
-  return "New Explorer";
 }

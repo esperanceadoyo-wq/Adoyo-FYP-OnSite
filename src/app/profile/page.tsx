@@ -8,6 +8,7 @@ import {
   type AchievementProgress,
 } from "@/features/dashboard/dashboard-data";
 import { requireAuth } from "@/features/auth/server-auth";
+import { levelName } from "@/features/progress/levels";
 
 export const metadata: Metadata = {
   title: "Profile & My Journey",
@@ -367,13 +368,6 @@ function Activity({
       </span>
     </div>
   );
-}
-
-function levelName(level: number) {
-  if (level >= 5) return "Community Guide";
-  if (level >= 3) return "Space Regular";
-  if (level >= 2) return "Campus Wanderer";
-  return "New Explorer";
 }
 
 function achievementIcon(code: string) {

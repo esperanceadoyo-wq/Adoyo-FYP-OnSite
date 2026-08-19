@@ -3,6 +3,7 @@ import { AppChrome } from "@/features/navigation/components/AppChrome";
 import { getInitials } from "@/features/auth/auth";
 import { getDashboardData } from "@/features/dashboard/dashboard-data";
 import { getLeaderboard, type LeaderboardEntry } from "@/features/leaderboard/leaderboard";
+import { LEVEL_TIERS } from "@/features/progress/levels";
 import { requireAuth } from "@/features/auth/server-auth";
 
 export const metadata: Metadata = {
@@ -32,14 +33,11 @@ type LeaderboardUser = {
   xp: string;
 };
 
-const tiers = [
-  { level: "Level 1", title: "New Explorer", xp: "0 XP" },
-  { level: "Level 2", title: "Campus Wanderer", xp: "200 XP" },
-  { level: "Level 3", title: "Community Connector", xp: "350 XP" },
-  { level: "Level 4", title: "Cultural Navigator", xp: "650 XP" },
-  { level: "Level 5", title: "Third Space Champion", xp: "1000 XP" },
-  { level: "Level 6", title: "OnSite Ambassador", xp: "1500 XP" },
-];
+const tiers = LEVEL_TIERS.map((tier) => ({
+  level: `Level ${tier.level}`,
+  title: tier.title,
+  xp: `${tier.minimumXp} XP`,
+}));
 
 export default async function LeaderboardPage() {
   const user = await requireAuth("/leaderboard");
